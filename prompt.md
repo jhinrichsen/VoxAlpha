@@ -2,7 +2,7 @@
 
 ## Objective
 
-Create a fully offline, installable web application named **VoxAlpha** that enables users to train and evaluate spelling proficiency using spoken and typed input. The app must be compact, efficient, and function entirely offline as a Progressive Web App (PWA), with no dependencies or external services.
+Create a fully offline, installable web application named **VoxAlpha** that enables users to train and evaluate spelling proficiency using spoken and typed input. The app must function entirely in the browser, require no internet access at runtime, and be deployable as a static site via local or remote HTTP/HTTPS.
 
 ## Features and Modes
 
@@ -27,74 +27,83 @@ Create a fully offline, installable web application named **VoxAlpha** that enab
 ### Offline-Only Operation
 - No Web Speech API
 - No online inference or resources
-- All assets must run in-browser
+- Must function fully offline once loaded
+- App must be served via HTTP/HTTPS (not file://)
+- Must work in local environments using `http-server`, `python -m http.server`, or similar
 
 ### Speech-to-Text (STT): whisper.cpp (WASM)
-- Use ggml-base.en.bin or similar minimal model
+- Use `ggml-base.en.bin` or similar minimal model
 - Compile to WebAssembly
-- Models must be stored and loaded via IndexedDB or localStorage
-- Model quality is intentionally minimal to simulate real-world conditions:
-  - Low-end microphones
-  - Background noise
-  - Speech distortion
+- Models must be loaded via IndexedDB or localStorage
+- Simulate poor recording conditions through use of minimal Whisper models
 
 ### Text-to-Speech (TTS): espeak-ng (WASM)
 - Run entirely offline in-browser
-- Preload phoneme data and voice files
+- Load phoneme data and voice models locally
 
 ### Alphabet Logic
-- Hardcode language-to-alphabet mapping:
+- Language-to-alphabet mapping must be hardcoded:
   - "de" → DIN 5009
-  - "en" → NATO
-- Alphabets stored as JSON or TS files
-- Normalize input/output (e.g., "Oscar" ≈ "Oskar")
+  - "en" → NATO/ICAO
+- Normalize input and match tolerantly (e.g. "Oscar" ≈ "Oskar")
 
 ### Storage
 - Use IndexedDB or localStorage to:
-  - Cache STT/TTS model files
+  - Cache STT and TTS models
   - Persist language selection
-  - Optionally log evaluation history
+  - Optionally store practice history or results
 
 ## UI Requirements
 
 - Minimal interface:
   - One language toggle
-  - One alphabet display area
-- No routing or complex components
-- Fully responsive layout using plain CSS
-- Use prefers-color-scheme (Media Queries Level 5)
-- manifest.json must define dark/light icons using the "media" attribute
+  - One area to display the current alphabet
+- Responsive layout using plain CSS
+- Respect `prefers-color-scheme` for dark/light theme
+- Use `manifest.json` with `media`-keyed icons for theme support
 
 ## Framework Policy
 
-- Strongly prefer plain HTML, JavaScript, and CSS
-- Do not use frameworks, bundlers, or package managers unless essential
-- If a framework is selected, provide written justification explaining:
-  - What technical problem it solves
-  - Why that benefit outweighs the added complexity and dependency surface
+- Prefer plain HTML, JavaScript, and CSS
+- Do not use frameworks, build systems, or package managers unless clearly justified
+- If a framework is selected, provide explicit justification in terms of technical necessity and minimal overhead
 
 ## Testing
 
-- Unit tests:
-  - Mapping letters to spelling words (DIN and NATO)
-  - Word-to-sequence expansion logic
+- Unit tests for:
+  - Alphabet mapping
+  - Word-to-spelling expansion logic
 
-- Integration tests:
-  - Simulated STT results (mocked input)
-  - TTS output triggers
-  - Language-switch state retention
-
-- Testing libraries must be minimal and browser-compatible
+- Integration tests for:
+  - Simulated STT transcription inputs
+  - TTS triggering and playback
+  - Persistence of language state
 
 ## Deliverables
 
-- index.html
-- script.js
-- style.css
-- manifest.json (with light/dark icon declarations using media queries)
-- service-worker.js
-- data/alphabets.json or alphabets.ts
-- lib/whisper-wrapper.js
-- lib/tts-wrapper.js
-- storage.js (IndexedDB/localStorage abstraction)
-- README.md with setup, install, and usage instructions
+- `index.html`
+- `script.js`
+- `style.css`
+- `manifest.json` with dark/light icon declarations
+- `service-worker.js`
+- `data/alphabets.json`
+- `lib/whisper-wrapper.js`
+- `lib/tts-wrapper.js`
+- `storage.js`
+- `README.md` with:
+  - Setup instructions for running over HTTP (e.g. using `http-server`)
+  - Instructions for offline use and caching behavior
+  - Supported browsers and minimum requirements
+
+## Definition of Done (DoD)
+
+- [ ] App loads and functions offline after initial visit
+- [ ] No errors in console when offline
+- [ ] Language toggle switches between German and English alphabets
+- [ ] STT and TTS work without internet connection
+- [ ] Models are cached in IndexedDB/localStorage
+- [ ] Basic error handling for microphone access
+- [ ] Dark/light theme responds to system preferences
+- [ ] All core features work in latest Chrome
+- [ ] No external network requests after initial load
+- [ ] Basic visual feedback for user actions
