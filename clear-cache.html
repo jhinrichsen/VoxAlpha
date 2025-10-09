@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Cache - VoxAlpha</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 4rem auto;
+            padding: 2rem;
+            text-align: center;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+        h1 { color: #42a5f5; }
+        button {
+            padding: 1rem 2rem;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin: 1rem;
+        }
+        button:hover { background-color: #d32f2f; }
+        #status {
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: #2d2d2d;
+            border-radius: 4px;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧹 Clear VoxAlpha Cache</h1>
+    <p>Click the button below to clear all caches and reload fresh.</p>
+    <button onclick="clearEverything()">Clear All Caches & Reload</button>
+    <div id="status">Ready</div>
+
+    <script>
+        async function clearEverything() {
+            const status = document.getElementById('status');
+            status.innerHTML = 'Clearing caches...<br>';
+
+            try {
+                // 1. Unregister service workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                        status.innerHTML += '✓ Service worker unregistered<br>';
+                    }
+                }
+
+                // 2. Clear Cache Storage
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    for (let name of cacheNames) {
+                        await caches.delete(name);
+                        status.innerHTML += `✓ Deleted cache: ${name}<br>`;
+                    }
+                }
+
+                // 3. Clear IndexedDB
+                const dbs = ['VoxAlphaDB', 'VoxAlphaWhisper'];
+                for (let dbName of dbs) {
+                    indexedDB.deleteDatabase(dbName);
+                    status.innerHTML += `✓ Deleted IndexedDB: ${dbName}<br>`;
+                }
+
+                // 4. Clear localStorage
+                localStorage.clear();
+                status.innerHTML += '✓ Cleared localStorage<br>';
+
+                // 5. Clear sessionStorage
+                sessionStorage.clear();
+                status.innerHTML += '✓ Cleared sessionStorage<br>';
+
+                status.innerHTML += '<br><strong>✅ All caches cleared!</strong><br>';
+                status.innerHTML += 'Redirecting to VoxAlpha in 2 seconds...';
+
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+
+            } catch (error) {
+                status.innerHTML += `<br>❌ Error: ${error.message}`;
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>

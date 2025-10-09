@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VoxAlpha - Offline Speech Spelling Trainer">
+    <meta name="theme-color" content="#1a1a1a">
+    <title>VoxAlpha</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Whisper WASM setup -->
+    <script src="lib/whisper/coi-serviceworker.js"></script>
+    <script src="lib/whisper/helpers.js"></script>
+    <div class="container">
+        <header>
+            <h1>VoxAlpha</h1>
+            <div class="language-toggle">
+                <button id="lang-de" class="lang-btn" data-lang="de">DE</button>
+                <button id="lang-en" class="lang-btn active" data-lang="en">EN</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="mode-selector">
+                <button id="mode-input" class="mode-btn active" data-mode="input">Practice: Type & Listen</button>
+                <button id="mode-output" class="mode-btn" data-mode="output">Practice: Listen & Speak</button>
+            </div>
+
+            <div id="input-mode" class="mode-content active">
+                <div class="input-section">
+                    <label for="text-input">Type or click letters:</label>
+                    <input type="text" id="text-input" placeholder="Enter text..." autocomplete="off">
+                </div>
+                <div class="alphabet-grid" id="alphabet-grid"></div>
+                <div class="output-section">
+                    <div id="spelled-output"></div>
+                </div>
+            </div>
+
+            <div id="output-mode" class="mode-content">
+                <div class="challenge-section">
+                    <div class="current-letter" id="current-letter">A</div>
+                    <div class="expected-word" id="expected-word">Alpha</div>
+                </div>
+                <div class="recording-section">
+                    <button id="record-btn" class="record-btn">
+                        <span class="mic-icon">🎤</span>
+                        <span class="btn-text">Hold to Speak</span>
+                    </button>
+                    <div class="manual-input-section">
+                        <label for="manual-answer">Or type your answer:</label>
+                        <input type="text" id="manual-answer" placeholder="Type the city name..." autocomplete="off">
+                        <button id="check-btn" class="check-btn">Check Answer</button>
+                    </div>
+                    <div id="transcription" class="transcription"></div>
+                    <div id="feedback" class="feedback"></div>
+                </div>
+                <button id="next-btn" class="next-btn">Next</button>
+            </div>
+        </main>
+
+        <footer>
+            <div class="status" id="status">Ready</div>
+            <div class="model-status">
+                <span id="stt-status" class="model-indicator">STT: Not loaded</span>
+                <span id="tts-status" class="model-indicator">TTS: Not loaded</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Whisper WASM Module - loaded before main script -->
+    <script>
+        // Configure Whisper Module
+        var Module = {
+            print: function(text) { console.log('[Whisper]', text); },
+            printErr: function(text) { console.error('[Whisper]', text); },
+            setStatus: function(text) { console.log('[Whisper Status]', text); },
+            monitorRunDependencies: function(left) { }
+        };
+
+        // IndexedDB config for model caching
+        let dbVersion = 1;
+        let dbName = 'VoxAlphaWhisper';
+    </script>
+    <script src="lib/whisper/main.js"></script>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>

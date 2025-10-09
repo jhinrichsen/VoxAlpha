@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoxAlpha Tests</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        h1 {
+            border-bottom: 2px solid #2196f3;
+            padding-bottom: 1rem;
+        }
+
+        .test-controls {
+            margin: 2rem 0;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-right: 1rem;
+        }
+
+        button:hover {
+            background-color: #1976d2;
+        }
+
+        #output {
+            background-color: #2d2d2d;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .note {
+            background-color: #3d3d3d;
+            padding: 1rem;
+            border-left: 4px solid #ff9800;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 VoxAlpha Test Suite</h1>
+
+    <div class="note">
+        <strong>Note:</strong> These tests run in the browser. Some integration tests may fail in environments without microphone access.
+    </div>
+
+    <div class="test-controls">
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="runUnitTests()">Run Unit Tests Only</button>
+        <button onclick="runIntegrationTests()">Run Integration Tests Only</button>
+        <button onclick="clearOutput()">Clear Output</button>
+    </div>
+
+    <div id="output"></div>
+
+    <script type="module">
+        import { testRunner } from './test-framework.js';
+
+        // Capture console output
+        const outputDiv = document.getElementById('output');
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        function captureOutput(fn, ...args) {
+            const text = args.map(arg =>
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            outputDiv.textContent += text + '\n';
+            fn.apply(console, args);
+        }
+
+        console.log = (...args) => captureOutput(originalLog, ...args);
+        console.error = (...args) => captureOutput(originalError, ...args);
+        console.warn = (...args) => captureOutput(originalWarn, ...args);
+
+        // Global test functions
+        window.runAllTests = async () => {
+            outputDiv.textContent = '';
+            console.log('Loading all tests...\n');
+
+            // Import tests
+            await import('./alphabet.test.js');
+            await import('./integration.test.js');
+
+            // Run tests
+            await testRunner.run();
+        };
+
+        window.runUnitTests = async () => {
+            outputDiv.textContent = '';
+            console.log('Loading unit tests...\n');
+
+            await import('./alphabet.test.js');
+            await testRunner.run();
+        };
+
+        window.runIntegrationTests = async () => {
+            outputDiv.textContent = '';
+            console.log('Loading integration tests...\n');
+
+            await import('./integration.test.js');
+            await testRunner.run();
+        };
+
+        window.clearOutput = () => {
+            outputDiv.textContent = '';
+        };
+
+        // Auto-run tests on load
+        console.log('Test runner ready. Click "Run All Tests" to start.\n');
+    </script>
+</body>
+</html>
