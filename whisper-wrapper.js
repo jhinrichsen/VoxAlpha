@@ -72,7 +72,34 @@ class WhisperSTT {
     async loadModel() {
         console.log('[Whisper] Loading model...');
 
-        const modelUrl = './lib/whisper/ggml-tiny-q5_1.bin';
+        // Check if external model URL is configured
+        let modelUrl = './lib/whisper/ggml-tiny-q5_1.bin';
+        let modelSize = 31; // MB
+
+        try {
+            const configResponse = await fetch('/api/config');
+            if (configResponse.ok) {
+                const config = await configResponse.json();
+                if (config.modelUrl) {
+                    modelUrl = config.modelUrl;
+                    // Estimate size based on model path (if provided) or URL
+                    const modelPath = config.modelPath || modelUrl;
+                    if (modelPath.includes('base')) {
+                        modelSize = 81;
+                    } else if (modelPath.includes('small')) {
+                        modelSize = 244;
+                    } else if (modelPath.includes('medium')) {
+                        modelSize = 769;
+                    } else if (modelPath.includes('large')) {
+                        modelSize = 1550;
+                    }
+                    console.log(`[Whisper] Using external model: ${modelUrl} (~${modelSize}MB)`);
+                }
+            }
+        } catch (err) {
+            console.log('[Whisper] No external model configured, using embedded tiny model');
+        }
+
         const modelName = 'whisper.bin';
 
         // Use the loadRemote function from helpers.js
@@ -125,8 +152,8 @@ class WhisperSTT {
                 return;
             }
 
-            // Load model with caching (31 MB)
-            loadRemote(modelUrl, modelName, 31, cbProgress, cbReady, cbCancel, cbPrint);
+            // Load model with caching
+            loadRemote(modelUrl, modelName, modelSize, cbProgress, cbReady, cbCancel, cbPrint);
         });
     }
 
@@ -165,15 +192,190 @@ class WhisperSTT {
             console.log(`[Whisper] Transcribing ${audioData.length} samples (${(audioData.length / 16000).toFixed(1)}s)`);
             console.log(`[Whisper] Audio stats: min=${Math.min(...audioData).toFixed(3)}, max=${Math.max(...audioData).toFixed(3)}`);
 
-            // Whisper WASM is aborting - this appears to be a known issue with the
-            // downloaded WASM binary not working properly in our environment.
-            // For now, show a helpful error and suggest using manual input
-            throw new Error('Whisper WASM transcription is not working. The downloaded Whisper.cpp WASM binary aborts during processing. This is a known issue that requires either: (1) rebuilding Whisper WASM with proper flags, (2) using a different STT engine, or (3) using the manual text input instead. Please type your answer in the text field below.');
+            // Save audio to downloadable WAV for debugging
+            const wavBlob = this.audioDataToWav(audioData, 16000);
+            const url = URL.createObjectURL(wavBlob);
+
+            // Auto-download the WAV file if ?download=1 or ?debug=1 query parameter is set
+            const urlParams = new URLSearchParams(window.location.search);
+            const shouldDownload = urlParams.get('download') === '1' || urlParams.get('debug') === '1';
+            
+            if (shouldDownload) {
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+                const filename = `voxalpha-recording-${timestamp}.wav`;
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                console.log(`[Whisper] Auto-downloading captured audio as: ${filename}`);
+                console.log('[Whisper] File should appear in your Downloads folder');
+            } else {
+                console.log(`[Whisper] Auto-download disabled. Blob URL: ${url}`);
+                console.log('[Whisper] Right-click the link above and "Save Link As" to download manually');
+            }
+
+            // Check if audio is completely silent before attempting transcription
+            const maxLevel = Math.max(...audioData.map(Math.abs));
+            if (maxLevel === 0) {
+                console.error('[Whisper] Cannot transcribe silent audio');
+                throw new Error('Audio is silent - check microphone settings');
+            }
+
+            // Intercept output using dynamic callbacks
+            const result = await new Promise((resolve, reject) => {
+                let transcriptionText = '';
+                let completed = false;
+                let outputLineCount = 0;
+                let lastOutputTime = Date.now();
+
+                const timeout = setTimeout(() => {
+                    console.log(`[Whisper] Timeout after 30s - received ${outputLineCount} output lines`);
+                    window.whisperPrintCallback = null;
+                    window.whisperPrintErrCallback = null;
+                    if (!completed) {
+                        completed = true;
+                        reject(new Error(`Transcription timeout - received ${outputLineCount} output lines`));
+                    }
+                }, 30000);
+
+                const finish = () => {
+                    if (completed) return;
+                    completed = true;
+                    clearTimeout(timeout);
+                    clearInterval(checkInterval);
+                    window.whisperPrintCallback = null;
+                    window.whisperPrintErrCallback = null;
+                    resolve(transcriptionText.trim());
+                };
+
+                const handleOutput = (text) => {
+                    outputLineCount++;
+                    lastOutputTime = Date.now();
+                    // Log ALL output to see what we're getting
+                    console.log(`[Whisper] Output line ${outputLineCount}: "${text}"`);
+
+                    // Match transcription lines: [00:00:00.000 --> 00:00:01.000]   Text
+                    const match = text.match(/\[[\d:\.]+\s+-->\s+[\d:\.]+\]\s+(.+)/);
+                    if (match) {
+                        transcriptionText += match[1].trim() + ' ';
+                        console.log(`[Whisper] Captured transcription: "${match[1].trim()}"`);
+                    }
+
+                    // Complete when we see timing summary
+                    if (text.includes('total time')) {
+                        console.log(`[Whisper] Transcription complete (${outputLineCount} lines): "${transcriptionText}"`);
+                        // Small delay to ensure all output is processed
+                        setTimeout(() => finish(), 100);
+                    }
+                };
+
+                // Set up dynamic callbacks BEFORE calling Module.full_default
+                window.whisperPrintCallback = handleOutput;
+                window.whisperPrintErrCallback = handleOutput;
+
+                console.log('[Whisper] Callbacks configured:', {
+                    printCallback: typeof window.whisperPrintCallback,
+                    printErrCallback: typeof window.whisperPrintErrCallback
+                });
+
+                // Check for completion after output stops (fallback mechanism)
+                // Wait 20+ seconds because transcription processing can take 15-20 seconds
+                const checkInterval = setInterval(() => {
+                    const timeSinceLastOutput = Date.now() - lastOutputTime;
+                    if (outputLineCount > 0 && timeSinceLastOutput > 20000 && !completed) {
+                        console.log(`[Whisper] No output for ${timeSinceLastOutput}ms, assuming complete`);
+                        finish();
+                    }
+                }, 2000);
+
+                try {
+                    console.log('[Whisper] Calling Module.full_default...');
+                    // Use all available CPU cores for faster transcription
+                    const numThreads = navigator.hardwareConcurrency || 4;
+                    console.log(`[Whisper] Using ${numThreads} threads`);
+                    
+                    // Call is synchronous and prints happen during execution
+                    const returnCode = Module.full_default(
+                        this.instance,
+                        audioData,
+                        this.language,
+                        numThreads,
+                        false
+                    );
+                    console.log(`[Whisper] Module.full_default returned: ${returnCode}`);
+
+                    if (returnCode !== 0) {
+                        clearTimeout(timeout);
+                        clearInterval(checkInterval);
+                        window.whisperPrintCallback = null;
+                        window.whisperPrintErrCallback = null;
+                        reject(new Error(`Whisper failed with code ${returnCode}`));
+                    }
+                    
+                    // If function returned successfully but we have no output yet,
+                    // wait a bit for callbacks to fire
+                    if (outputLineCount === 0) {
+                        console.log('[Whisper] Waiting for output callbacks...');
+                    }
+                } catch (err) {
+                    clearTimeout(timeout);
+                    clearInterval(checkInterval);
+                    window.whisperPrintCallback = null;
+                    window.whisperPrintErrCallback = null;
+                    reject(err);
+                }
+            });
+
+            console.log(`[Whisper] Transcription result: "${result}"`);
+            return result;
 
         } catch (error) {
             console.error('[Whisper] Transcription failed:', error);
             throw error;
         }
+    }
+
+    /**
+     * Convert Float32Array audio to WAV blob
+     */
+    audioDataToWav(samples, sampleRate) {
+        const buffer = new ArrayBuffer(44 + samples.length * 2);
+        const view = new DataView(buffer);
+
+        // WAV header
+        const writeString = (offset, string) => {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        };
+
+        writeString(0, 'RIFF');
+        view.setUint32(4, 36 + samples.length * 2, true);
+        writeString(8, 'WAVE');
+        writeString(12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeString(36, 'data');
+        view.setUint32(40, samples.length * 2, true);
+
+        // Write PCM samples
+        let offset = 44;
+        for (let i = 0; i < samples.length; i++, offset += 2) {
+            const s = Math.max(-1, Math.min(1, samples[i]));
+            view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        }
+
+        return new Blob([buffer], { type: 'audio/wav' });
     }
 
     /**
@@ -256,6 +458,7 @@ export class AudioProcessor {
                     hasGetUserMedia: typeof navigator.mediaDevices?.getUserMedia !== 'undefined'
                 });
 
+                // Try to get the actual microphone (not a monitor/loopback device)
                 this.stream = await navigator.mediaDevices.getUserMedia({
                     audio: {
                         channelCount: 1,
@@ -263,7 +466,9 @@ export class AudioProcessor {
                         noiseSuppression: false,   // Disable processing
                         autoGainControl: true,     // Keep AGC enabled
                         sampleRate: 48000,
-                        sampleSize: 16
+                        sampleSize: 16,
+                        // Request actual input device (not output monitor)
+                        deviceId: undefined  // Let browser pick default input
                     }
                 });
 
@@ -323,39 +528,39 @@ export class AudioProcessor {
         // Reset samples buffer
         this.samples = [];
         this.recording = true;
+        this.useMediaRecorder = false;
 
-        // Use MediaRecorder API for better browser support
-        try {
-            this.mediaRecorder = new MediaRecorder(this.stream, {
-                mimeType: 'audio/webm;codecs=opus',
-                audioBitsPerSecond: 128000
-            });
+        // Use ScriptProcessorNode for direct audio capture (more reliable than MediaRecorder)
+        console.log('[AudioProcessor] Using ScriptProcessorNode for direct audio capture');
+        this.source = this.audioContext.createMediaStreamSource(this.stream);
+        this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
 
-            this.mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) {
-                    this.samples.push(e.data);
+        let chunkCount = 0;
+        this.processor.onaudioprocess = (e) => {
+            if (this.recording) {
+                const inputData = e.inputBuffer.getChannelData(0);
+
+                // Debug: Check if we're getting any non-zero samples
+                chunkCount++;
+                if (chunkCount <= 3) {
+                    let max = 0;
+                    for (let i = 0; i < inputData.length; i++) {
+                        const abs = Math.abs(inputData[i]);
+                        if (abs > max) max = abs;
+                    }
+                    console.log(`[AudioProcessor] Chunk ${chunkCount}: length=${inputData.length}, max=${max.toFixed(6)}`);
                 }
-            };
 
-            this.mediaRecorder.start(100); // Capture every 100ms
-            console.log('[AudioProcessor] Started recording with MediaRecorder');
-        } catch (err) {
-            // Fallback to ScriptProcessorNode if MediaRecorder fails
-            console.warn('[AudioProcessor] MediaRecorder failed, using ScriptProcessorNode:', err);
-            this.source = this.audioContext.createMediaStreamSource(this.stream);
-            this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
+                // Copy the data to avoid reference issues
+                const chunk = new Float32Array(inputData.length);
+                chunk.set(inputData);
+                this.samples.push(chunk);
+            }
+        };
 
-            this.processor.onaudioprocess = (e) => {
-                if (this.recording) {
-                    const inputData = e.inputBuffer.getChannelData(0);
-                    this.samples.push(new Float32Array(inputData));
-                }
-            };
-
-            this.source.connect(this.processor);
-            this.processor.connect(this.audioContext.destination);
-            console.log('[AudioProcessor] Started recording with ScriptProcessorNode');
-        }
+        this.source.connect(this.processor);
+        this.processor.connect(this.audioContext.destination);
+        console.log('[AudioProcessor] Started recording with ScriptProcessorNode');
     }
 
     /**
@@ -370,66 +575,7 @@ export class AudioProcessor {
 
         this.recording = false;
 
-        // Check if using MediaRecorder
-        if (this.mediaRecorder) {
-            return new Promise((resolve) => {
-                this.mediaRecorder.onstop = async () => {
-                    console.log(`[AudioProcessor] MediaRecorder stopped, captured ${this.samples.length} chunks`);
-
-                    if (this.samples.length === 0) {
-                        console.warn('[AudioProcessor] No audio data captured');
-                        resolve(new Float32Array(0));
-                        return;
-                    }
-
-                    // Combine all blobs
-                    const audioBlob = new Blob(this.samples, { type: 'audio/webm' });
-                    console.log(`[AudioProcessor] Audio blob size: ${audioBlob.size} bytes`);
-
-                    // Decode the audio blob
-                    try {
-                        const arrayBuffer = await audioBlob.arrayBuffer();
-                        const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-                        const samples = audioBuffer.getChannelData(0);
-
-                        console.log(`[AudioProcessor] Decoded ${samples.length} samples at ${audioBuffer.sampleRate}Hz`);
-
-                        // Check audio levels
-                        let max = 0;
-                        let sum = 0;
-                        for (let i = 0; i < samples.length; i++) {
-                            const abs = Math.abs(samples[i]);
-                            if (abs > max) max = abs;
-                            sum += abs;
-                        }
-                        const avg = sum / samples.length;
-                        console.log(`[AudioProcessor] Audio levels: max=${max.toFixed(3)}, avg=${avg.toFixed(3)}`);
-
-                        // Resample to 16kHz
-                        const targetSampleRate = 16000;
-                        if (audioBuffer.sampleRate !== targetSampleRate) {
-                            console.log(`[AudioProcessor] Resampling from ${audioBuffer.sampleRate}Hz to ${targetSampleRate}Hz`);
-                            const resampled = this.resample(samples, audioBuffer.sampleRate, targetSampleRate);
-                            console.log(`[AudioProcessor] Resampled to ${resampled.length} samples (${(resampled.length / targetSampleRate).toFixed(2)}s)`);
-                            resolve(resampled);
-                        } else {
-                            resolve(samples);
-                        }
-                    } catch (error) {
-                        console.error('[AudioProcessor] Failed to decode audio:', error);
-                        resolve(new Float32Array(0));
-                    }
-
-                    // Clear samples buffer
-                    this.samples = [];
-                    this.mediaRecorder = null;
-                };
-
-                this.mediaRecorder.stop();
-            });
-        }
-
-        // Fallback: ScriptProcessorNode path
+        // ScriptProcessorNode path (direct audio capture)
         if (this.source) {
             this.source.disconnect();
             this.source = null;
@@ -468,6 +614,15 @@ export class AudioProcessor {
         }
         const avg = sum / result.length;
         console.log(`[AudioProcessor] Raw audio levels: max=${max.toFixed(3)}, avg=${avg.toFixed(3)}`);
+
+        // Warn if audio is completely silent
+        if (max === 0) {
+            console.error('[AudioProcessor] WARNING: Audio is completely silent! Check microphone.');
+            console.error('[AudioProcessor] Possible issues:');
+            console.error('[AudioProcessor]  - Microphone is muted in system settings');
+            console.error('[AudioProcessor]  - Wrong microphone selected');
+            console.error('[AudioProcessor]  - Browser audio permissions issue');
+        }
 
         // Apply gain if audio is too quiet (below 0.01 max)
         if (max < 0.01 && max > 0) {

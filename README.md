@@ -25,6 +25,17 @@ VoxAlpha is a fully offline, installable web application that helps you learn an
   - Dark/light theme based on system preference
   - Responsive design for mobile and desktop
 
+## Version
+
+**Current Version:** v1.0.0 (Initial Release)
+
+VoxAlpha uses [Semantic Versioning](https://semver.org/).
+
+**Release Management:**
+- **Single source of truth:** Git tags control versioning
+- **Quick release:** `git tag v0.2.1 && make release` - See [RELEASE.md](RELEASE.md)
+- **Update System:** [UPDATES.md](UPDATES.md)
+
 ## Quick Start
 
 ### Prerequisites
@@ -152,13 +163,106 @@ Tests include:
   - Voice data files for de/en
   - AudioPlayer integration
 
+## PWA Checklist
+
+VoxAlpha is a fully compliant Progressive Web App (PWA). Here's what makes it installable:
+
+### ✅ Core Requirements
+Based on [Web.dev PWA Checklist](https://web.dev/pwa-checklist/) and [MDN PWA Guide](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable):
+
+- **Web App Manifest** (`manifest.json`)
+  - ✅ `name` and `short_name` defined
+  - ✅ `icons` array with at least 192x192 and 512x512 PNG icons
+  - ✅ `start_url` specified
+  - ✅ `display: "standalone"` for app-like experience
+  - ✅ `theme_color` and `background_color` set
+  - ✅ `description` for app stores
+  - ✅ `screenshots` for enhanced install prompts (wide: 1280x720, narrow: 540x720)
+
+- **Service Worker** (`service-worker.js`)
+  - ✅ Registered in main application script (`script.js:64`)
+  - ✅ Caches essential resources for offline use
+  - ✅ Implements cache-first strategy for static assets
+  - ✅ Serves cached content when offline
+  - ✅ Handles cache versioning and cleanup
+
+- **Icons** (`icons/` directory)
+  - ✅ 8 icon sizes: 72x72, 96x96, 128x128, 144x144, 152x152, 192x192, 384x384, 512x512
+  - ✅ PNG format for broad compatibility
+  - ✅ Maskable icons for adaptive icon support
+  - ✅ Generated from vector source (`favicon.svg`)
+
+- **HTTPS / Secure Context**
+  - ✅ Service Worker requires HTTPS (or localhost for development)
+  - ✅ COOP/COEP headers set for SharedArrayBuffer support (`main.go:66-67`)
+  - ✅ Cross-Origin isolation for WASM threading
+
+- **Responsive Design**
+  - ✅ Viewport meta tag configured
+  - ✅ Mobile-friendly UI (works at 540px width)
+  - ✅ Touch-friendly controls
+
+### 📸 Screenshots
+
+Screenshots are automatically generated using the chromedp-based tool in `tools/screenshot/`:
+
+```bash
+cd tools/screenshot
+APP_URL=http://localhost:8081 ./screenshot
+```
+
+This creates:
+- `screenshots/screenshot-wide.png` (1280x720) - Desktop/tablet view
+- `screenshots/screenshot-narrow.png` (540x720) - Mobile view
+
+The tool automatically handles the Whisper model download dialog.
+
+### 🔧 Testing PWA Installation
+
+1. **Start the server:**
+   ```bash
+   ./voxalpha
+   # or
+   go run main.go
+   ```
+
+2. **Open in Chrome/Edge:**
+   Navigate to `http://localhost:8081`
+
+3. **Install the PWA:**
+   - Look for install icon (⊕) in address bar
+   - Click and select "Install"
+   - App opens as standalone window
+
+4. **Verify offline functionality:**
+   - Install the app
+   - Stop the server
+   - Reopen the app - it should still work!
+
+### 📚 References
+
+- [PWA Checklist - web.dev](https://web.dev/pwa-checklist/)
+- [Making PWAs installable - MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable)
+- [Web App Manifest - W3C](https://www.w3.org/TR/appmanifest/)
+- [Service Worker API - MDN](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)
+
 ## Browser Support
 
-**Recommended:**
-- Chrome 90+
-- Edge 90+
+### Recommended for Full PWA Experience:
+- **Chrome 90+** - Full PWA support with native install prompt
+- **Edge 90+** - Full PWA support with native install prompt
 
-**Minimum requirements:**
+### Firefox Support:
+- **Firefox Desktop** - ⚠️ Limited PWA installation support
+  - All features work (offline, service worker, manifest)
+  - No native "Install" button in Firefox
+  - **Workarounds:**
+    - Use the "[PWAs for Firefox](https://addons.mozilla.org/en-US/firefox/addon/pwas-for-firefox/)" extension
+    - On Windows: Enable experimental flag `browser.taskbarTabs.enabled` in `about:config` (Firefox 143+)
+    - Or simply use as a regular website (full functionality, just not installed)
+- **Firefox Android** - ✅ Full PWA support with installation
+
+### Minimum Requirements (All Browsers):
 - ES6 modules support
 - IndexedDB
 - Web Audio API
@@ -239,8 +343,6 @@ To integrate real WASM modules:
 ### Other Limitations
 
 - TTS falls back to Web Speech API (not fully offline, but functional)
-- No icons included (manifest references placeholder paths)
-- No screenshots included
 - Manual input required for speech recognition (Whisper WASM blocked)
 
 ## License

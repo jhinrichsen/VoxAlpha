@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <!-- Gradient along the shared slash direction -->
+    <linearGradient id="VA-blend" x1="102" y1="216" x2="166" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0"  stop-color="#4A9EFF"/>  <!-- Vox (blue) at the bottom -->
+      <stop offset="1"  stop-color="#FF4A4A"/>  <!-- Alpha (red) at the top -->
+    </linearGradient>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#000"/>
+
+  <!-- Draw A (red) first so it's behind -->
+  <g fill="none" stroke="#FF4A4A" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+    <!-- A right "\" -->
+    <path d="M166 40 L218 216"/>
+    <!-- A crossbar (behind the shared slash) -->
+    <path d="M134 150 L194 150"/>
+  </g>
+
+  <!-- V left "\" -->
+  <path d="M38 40 L102 216" fill="none" stroke="#4A9EFF" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Shared "/" (on top), using gradient blend -->
+  <path d="M102 216 L166 40" fill="none" stroke="url(#VA-blend)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+

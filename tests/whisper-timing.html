@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisper Timing Test - VoxAlpha</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        h1 {
+            color: #42a5f5;
+        }
+        #output {
+            background: #000;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .pass { color: #4caf50; }
+        .fail { color: #f44336; }
+        .info { color: #42a5f5; }
+    </style>
+</head>
+<body>
+    <h1>Whisper WASM Timing Test</h1>
+    <p>Testing transcription performance with Insbruck.wav...</p>
+    <div id="output">Loading...</div>
+
+    <script>
+        // Capture console output
+        const outputDiv = document.getElementById('output');
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        console.log = (...args) => {
+            originalLog(...args);
+            const text = args.join(' ');
+            const span = document.createElement('span');
+            
+            if (text.includes('✓') || text.includes('PASS')) {
+                span.className = 'pass';
+            } else if (text.includes('✗') || text.includes('FAIL')) {
+                span.className = 'fail';
+            } else if (text.includes('[Test]')) {
+                span.className = 'info';
+            }
+            
+            span.textContent = text + '\n';
+            outputDiv.appendChild(span);
+        };
+        
+        console.error = (...args) => {
+            originalError(...args);
+            const span = document.createElement('span');
+            span.className = 'fail';
+            span.textContent = args.join(' ') + '\n';
+            outputDiv.appendChild(span);
+        };
+        
+        outputDiv.textContent = '';
+    </script>
+    
+    <script src="../lib/whisper/helpers.js"></script>
+    <script>
+        var Module = {
+            print: console.log,
+            printErr: console.error,
+            setStatus: function(text) { console.log('[Whisper Status]', text); }
+        };
+    </script>
+    <script src="../lib/whisper/main.js"></script>
+    <script type="module" src="./whisper-timing.test.js"></script>
+</body>
+</html>

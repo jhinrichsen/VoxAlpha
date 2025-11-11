@@ -67,7 +67,7 @@ describe('Storage Integration', () => {
 
 describe('STT Integration', () => {
     it('should initialize Whisper STT', async () => {
-        const { whisperSTT } = await import('../lib/whisper-wrapper.js');
+        const { whisperSTT } = await import('../whisper-wrapper.js');
         await whisperSTT.init('en');
 
         expect(whisperSTT.isInitialized()).toBe(true);
@@ -75,7 +75,7 @@ describe('STT Integration', () => {
     });
 
     it('should switch language', async () => {
-        const { whisperSTT } = await import('../lib/whisper-wrapper.js');
+        const { whisperSTT } = await import('../whisper-wrapper.js');
         await whisperSTT.init('en');
         await whisperSTT.setLanguage('de');
 
@@ -83,7 +83,7 @@ describe('STT Integration', () => {
     });
 
     it('should handle audio transcription', async () => {
-        const { whisperSTT } = await import('../lib/whisper-wrapper.js');
+        const { whisperSTT } = await import('../whisper-wrapper.js');
         await whisperSTT.init('en');
 
         // Mock audio data (1 second of silence at 16kHz)
@@ -94,7 +94,7 @@ describe('STT Integration', () => {
     });
 
     it('should handle transcription errors gracefully', async () => {
-        const { whisperSTT } = await import('../lib/whisper-wrapper.js');
+        const { whisperSTT } = await import('../whisper-wrapper.js');
 
         // Try to transcribe without initialization
         whisperSTT.initialized = false;
@@ -165,7 +165,7 @@ describe('TTS Integration', () => {
 
 describe('Audio Processing', () => {
     it('should initialize audio processor', async () => {
-        const { AudioProcessor } = await import('../lib/whisper-wrapper.js');
+        const { AudioProcessor } = await import('../whisper-wrapper.js');
         const processor = new AudioProcessor();
 
         // Note: This will fail in headless environments without microphone
@@ -182,7 +182,7 @@ describe('Audio Processing', () => {
     });
 
     it('should clean up resources', async () => {
-        const { AudioProcessor } = await import('../lib/whisper-wrapper.js');
+        const { AudioProcessor } = await import('../whisper-wrapper.js');
         const processor = new AudioProcessor();
 
         processor.audioContext = { close: () => {} };

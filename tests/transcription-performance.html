@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcription Performance Test - VoxAlpha</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        h1 {
+            color: #4fc3f7;
+            border-bottom: 2px solid #4fc3f7;
+            padding-bottom: 10px;
+        }
+        #test-output {
+            background: #000;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            min-height: 400px;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+        }
+        .pass { color: #4caf50; }
+        .fail { color: #f44336; }
+        .warn { color: #ff9800; }
+        .info { color: #4fc3f7; }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #4fc3f7;
+        }
+        button {
+            background: #4fc3f7;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #29b6f6;
+        }
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .stat-box {
+            background: #333;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4fc3f7;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎤 Transcription Performance Test</h1>
+    
+    <div class="section">
+        <h2>About This Test</h2>
+        <p>
+            This test measures Whisper WASM transcription performance using a real recording.
+            The test file is <strong>wolfsburg.wav</strong> (~2 seconds of audio).
+        </p>
+        <p>
+            <strong>Expected Performance:</strong><br>
+            • Desktop CPU (modern): 3-8x realtime<br>
+            • Laptop CPU: 5-15x realtime<br>
+            • Single-threaded WASM: 10-20x realtime
+        </p>
+        <p class="warn">
+            ⚠️ If you're seeing >15 seconds for 2 seconds of audio, WASM may be running single-threaded.
+        </p>
+    </div>
+
+    <div class="section">
+        <button id="run-test" onclick="runTests()">▶️ Run Performance Test</button>
+        <button onclick="location.reload()">🔄 Reload</button>
+    </div>
+
+    <div class="section">
+        <h2>Test Output</h2>
+        <div id="test-output">Waiting for test to run...</div>
+    </div>
+
+    <div class="section" id="stats-section" style="display: none;">
+        <h2>Performance Stats</h2>
+        <div class="stats" id="stats"></div>
+    </div>
+
+    <!-- Whisper WASM setup -->
+    <script src="../lib/whisper/coi-serviceworker.js"></script>
+    <script src="../lib/whisper/helpers.js"></script>
+    
+    <!-- Whisper WASM Module -->
+    <script>
+        window.whisperPrintCallback = null;
+        window.whisperPrintErrCallback = null;
+
+        var Module = {
+            print: function(text) {
+                console.log('[Whisper]', text);
+                if (window.whisperPrintCallback) {
+                    try {
+                        window.whisperPrintCallback(text);
+                    } catch (err) {
+                        console.error('[Whisper] Callback error:', err);
+                    }
+                }
+            },
+            printErr: function(text) {
+                console.error('[Whisper]', text);
+                if (window.whisperPrintErrCallback) {
+                    try {
+                        window.whisperPrintErrCallback(text);
+                    } catch (err) {
+                        console.error('[Whisper] Callback error:', err);
+                    }
+                }
+            },
+            setStatus: function(text) { console.log('[Whisper Status]', text); },
+            monitorRunDependencies: function(left) { }
+        };
+
+        let dbVersion = 1;
+        let dbName = 'VoxAlphaWhisper';
+
+        console.log('[Whisper Status] SharedArrayBuffer available:', typeof SharedArrayBuffer !== 'undefined');
+        console.log('[Whisper Status] crossOriginIsolated:', crossOriginIsolated);
+    </script>
+    <script src="../lib/whisper/main.js"></script>
+
+    <script type="module">
+        import { testFramework } from './test-framework.js';
+        
+        // Capture console output
+        const output = document.getElementById('test-output');
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        let testStats = {};
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const line = args.join(' ');
+            output.textContent += line + '\n';
+            output.scrollTop = output.scrollHeight;
+            
+            // Extract stats
+            if (line.includes('Processing time:')) {
+                const match = line.match(/(\d+\.\d+)s/);
+                if (match) testStats.processingTime = match[1];
+            }
+            if (line.includes('Audio length:')) {
+                const match = line.match(/(\d+\.\d+)s/);
+                if (match) testStats.audioLength = match[1];
+            }
+            if (line.includes('Realtime factor:')) {
+                const match = line.match(/(\d+\.\d+)x/);
+                if (match) testStats.realtimeFactor = match[1];
+            }
+            if (line.includes('Transcription:')) {
+                const match = line.match(/Transcription: "(.+)"/);
+                if (match) testStats.transcription = match[1];
+            }
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            output.textContent += '[ERROR] ' + args.join(' ') + '\n';
+            output.scrollTop = output.scrollHeight;
+        };
+        
+        window.runTests = async function() {
+            output.textContent = '';
+            testStats = {};
+            document.getElementById('run-test').disabled = true;
+            document.getElementById('stats-section').style.display = 'none';
+            
+            try {
+                await import('./transcription-performance.test.js');
+                
+                // Show stats if available
+                if (Object.keys(testStats).length > 0) {
+                    const statsDiv = document.getElementById('stats');
+                    statsDiv.innerHTML = `
+                        <div class="stat-box">
+                            <div class="stat-value">${testStats.audioLength || '?'}s</div>
+                            <div class="stat-label">Audio Length</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${testStats.processingTime || '?'}s</div>
+                            <div class="stat-label">Processing Time</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${testStats.realtimeFactor || '?'}x</div>
+                            <div class="stat-label">Realtime Factor</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${testStats.transcription || 'N/A'}</div>
+                            <div class="stat-label">Result</div>
+                        </div>
+                    `;
+                    document.getElementById('stats-section').style.display = 'block';
+                }
+            } catch (err) {
+                console.error('Test error:', err);
+            } finally {
+                document.getElementById('run-test').disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>

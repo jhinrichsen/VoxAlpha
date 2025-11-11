@@ -3,8 +3,10 @@
  * Handles offline caching and resource management
  */
 
-const CACHE_NAME = 'voxalpha-v11';
-const RUNTIME_CACHE = 'voxalpha-runtime-v11';
+// Version information - update this for new releases
+const VERSION = '1.0.0';
+const CACHE_NAME = `voxalpha-v${VERSION.replace(/\./g, '-')}`;
+const RUNTIME_CACHE = `voxalpha-runtime-v${VERSION.replace(/\./g, '-')}`;
 
 // Core files that must be cached for offline functionality
 const CORE_ASSETS = [
@@ -15,8 +17,8 @@ const CORE_ASSETS = [
     './storage.js',
     './manifest.json',
     './data/alphabets.json',
-    './lib/whisper-wrapper.js',
-    './lib/tts-wrapper.js',
+    './whisper-wrapper.js',
+    './tts-wrapper.js',
     './lib/whisper/main.js',
     './lib/whisper/helpers.js',
     './lib/whisper/coi-serviceworker.js',
@@ -94,7 +96,15 @@ self.addEventListener('fetch', (event) => {
             .then((cachedResponse) => {
                 if (cachedResponse) {
                     console.log('[ServiceWorker] Serving from cache:', request.url);
-                    return cachedResponse;
+                    // Add COOP/COEP headers for SharedArrayBuffer support
+                    const headers = new Headers(cachedResponse.headers);
+                    headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+                    headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+                    return new Response(cachedResponse.body, {
+                        status: cachedResponse.status,
+                        statusText: cachedResponse.statusText,
+                        headers: headers
+                    });
                 }
 
                 // Not in cache, fetch from network
@@ -115,7 +125,15 @@ self.addEventListener('fetch', (event) => {
                                 cache.put(request, responseToCache);
                             });
 
-                        return response;
+                        // Add COOP/COEP headers for SharedArrayBuffer support
+                        const headers = new Headers(response.headers);
+                        headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+                        headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+                        return new Response(response.body, {
+                            status: response.status,
+                            statusText: response.statusText,
+                            headers: headers
+                        });
                     })
                     .catch((error) => {
                         console.error('[ServiceWorker] Fetch failed:', error);

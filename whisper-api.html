@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Whisper API Check</title>
+</head>
+<body>
+    <h1>Checking Whisper API...</h1>
+    <pre id="output"></pre>
+    
+    <script>
+        var Module = {
+            print: console.log,
+            printErr: console.error,
+            onRuntimeInitialized: function() {
+                const output = document.getElementById('output');
+                output.textContent = 'Module properties:\n' + 
+                    Object.keys(Module)
+                        .filter(k => typeof Module[k] === 'function' && !k.startsWith('_'))
+                        .join('\n');
+            }
+        };
+    </script>
+    <script src="lib/whisper/main.js"></script>
+</body>
+</html>
