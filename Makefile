@@ -50,9 +50,9 @@ release:
 		exit 1; \
 	fi; \
 	echo "Current version: $$VERSION"; \
-	echo "Updating service-worker.js..."; \
-	sed -i "s/const VERSION = '[^']*'/const VERSION = '$$VERSION'/" service-worker.js; \
-	echo "✓ Updated service-worker.js to $$VERSION"; \
+	echo "Updating dist/service-worker.js..."; \
+	sed -i "s/const VERSION = '[^']*'/const VERSION = '$$VERSION'/" dist/service-worker.js; \
+	echo "✓ Updated dist/service-worker.js to $$VERSION"; \
 	echo "Rebuilding binary with version..."; \
 	$(GO) build -ldflags "-X 'main.version=$$VERSION'" -o $(BINARY) .; \
 	echo "✓ Built $(BINARY) $$VERSION"; \
