@@ -1,0 +1,25 @@
+# Whisper model files
+*.bin
+*.gguf
+
+# Whisper-cpp directory
+whisper-cpp/
+
+# Audio test files
+*.wav
+*.mp3
+*.flac
+*.ogg
+
+# Build artifacts
+voxalpha
+release
+screenshot
+
+# Go build artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
