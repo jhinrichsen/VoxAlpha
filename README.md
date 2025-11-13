@@ -116,28 +116,6 @@ The application embeds all assets from `dist/` except the Whisper model, which s
 4. Click "Next" or auto-advance on correct answer
 5. Practice until you master the alphabet!
 
-## Project Structure
-
-```
-VoxAlpha/
-├── index.html              # Main app page
-├── style.css              # Responsive styles with dark/light theme
-├── script.js              # Core app logic
-├── storage.js             # IndexedDB wrapper
-├── manifest.json          # PWA manifest
-├── service-worker.js      # Offline caching
-├── data/
-│   └── alphabets.json     # DIN 5009 & NATO/ICAO mappings
-├── lib/
-│   ├── whisper-wrapper.js # STT integration (placeholder)
-│   └── tts-wrapper.js     # TTS integration (placeholder)
-└── tests/
-    ├── index.html         # Test runner page
-    ├── test-framework.js  # Minimal test framework
-    ├── alphabet.test.js   # Unit tests
-    └── integration.test.js # Integration tests
-```
-
 ## Running Tests
 
 1. Start the local HTTP server
