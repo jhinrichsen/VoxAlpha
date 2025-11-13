@@ -4,9 +4,9 @@
  */
 
 // Version information - update this for new releases
-const VERSION = '1.0.0';
-const CACHE_NAME = `voxalpha-v${VERSION.replace(/\./g, '-')}`;
-const RUNTIME_CACHE = `voxalpha-runtime-v${VERSION.replace(/\./g, '-')}`;
+const VERSION = '0.3.5';
+const CACHE_NAME = `voxalpha-${VERSION.replace(/\./g, '-')}`;
+const RUNTIME_CACHE = `voxalpha-runtime-${VERSION.replace(/\./g, '-')}`;
 
 // Core files that must be cached for offline functionality
 const CORE_ASSETS = [
