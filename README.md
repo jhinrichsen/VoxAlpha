@@ -80,6 +80,27 @@ VoxAlpha uses [Semantic Versioning](https://semver.org/).
 
 4. **Grant microphone access** when prompted (required for Listen & Speak mode)
 
+### Deployment
+
+To build and deploy VoxAlpha:
+
+1. **Download Whisper model** (required for speech recognition):
+   ```bash
+   make download-model
+   ```
+   This downloads the `ggml-small-q8_0.bin` model (253MB) to `dist/`.
+
+   **Note:** The Whisper model is required but not included in the repository due to its size. It must be downloaded separately before deployment.
+
+2. **Build the binary**:
+   ```bash
+   make build
+   ```
+
+3. **Deploy** the `voxalpha` binary to your server
+
+The application embeds all assets from `dist/` except the Whisper model, which should be provided via the `--model` flag or placed in `dist/`.
+
 ### Using the App
 
 #### Type & Listen Mode

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"net"
 	"net/http"
@@ -16,8 +17,7 @@ import (
 // Version is set via ldflags during build
 var version = "dev"
 
-//go:embed index.html style.css script.js storage.js service-worker.js clear-cache.html manifest.json favicon.svg german-cities.txt whisper-wrapper.js tts-wrapper.js
-//go:embed lib data icons screenshots
+//go:embed dist
 var content embed.FS
 
 func main() {
@@ -39,7 +39,11 @@ func main() {
 	}
 
 	// Create filesystem with proper MIME types
-	fsys := http.FS(content)
+	distFS, err := fs.Sub(content, "dist")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fsys := http.FS(distFS)
 
 	// Serve external model if provided
 	if *model != "" {

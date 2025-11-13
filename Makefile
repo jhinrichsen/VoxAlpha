@@ -17,6 +17,22 @@ run:
 clean:
 	rm -f $(BINARY)
 
+# Model management
+MODEL_URL = https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q8_0.bin
+MODEL_FILE = dist/ggml-small-q8_0.bin
+
+$(MODEL_FILE):
+	@echo "Downloading Whisper small model (253MB)..."
+	curl -L -o $@ $(MODEL_URL)
+	@echo "✓ Model downloaded"
+
+.PHONY: download-model
+download-model: $(MODEL_FILE)
+
+.PHONY: clean-model
+clean-model:
+	rm -f $(MODEL_FILE)
+
 # Release management
 .PHONY: release
 

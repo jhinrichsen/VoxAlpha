@@ -16,7 +16,7 @@ const CORE_ASSETS = [
     './script.js',
     './storage.js',
     './manifest.json',
-    './data/alphabets.json',
+    './alphabets.json',
     './whisper-wrapper.js',
     './tts-wrapper.js',
     './lib/whisper/main.js',

@@ -116,7 +116,7 @@ class VoxAlpha {
      */
     async loadAlphabets() {
         try {
-            const response = await fetch('./data/alphabets.json');
+            const response = await fetch('./alphabets.json');
             this.alphabets = await response.json();
             console.log('[VoxAlpha] Alphabets loaded');
         } catch (error) {
