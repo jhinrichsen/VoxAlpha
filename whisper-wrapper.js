@@ -9,6 +9,8 @@ class WhisperSTT {
         this.modelLoaded = false;
         this.instance = null;
         this.language = 'en';
+        this.transcriptionCount = 0;
+        this.maxTranscriptionsBeforeReload = 10; // Reload after 10 transcriptions to prevent OOM
     }
 
     /**
@@ -105,7 +107,7 @@ class WhisperSTT {
         // Use the loadRemote function from helpers.js
         return new Promise((resolve, reject) => {
             const cbProgress = (progress) => {
-                console.log(`[Whisper] Model loading: ${Math.round(progress * 100)}%`);
+                // Suppress progress messages for cleaner console
             };
 
             const cbReady = (dst, data) => {
@@ -332,6 +334,16 @@ class WhisperSTT {
             });
 
             console.log(`[Whisper] Transcription result: "${result}"`);
+
+            // Increment transcription counter and check if we need to reload
+            this.transcriptionCount++;
+            if (this.transcriptionCount >= this.maxTranscriptionsBeforeReload) {
+                console.log(`[Whisper] Reloading Whisper instance after ${this.transcriptionCount} transcriptions to prevent memory leak`);
+                this.transcriptionCount = 0;
+                // Reload the model to clear accumulated state
+                await this.loadModel();
+            }
+
             return result;
 
         } catch (error) {
@@ -437,8 +449,11 @@ export class AudioProcessor {
             // Note: Browser might not support 16kHz, so we'll resample if needed
             if (!this.audioContext || this.audioContext.state === 'closed') {
                 this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                console.log(`[AudioProcessor] Created AudioContext (sample rate: ${this.audioContext.sampleRate}Hz)`);
+                console.log(`[AudioProcessor] Created AudioContext (sample rate: ${this.audioContext.sampleRate}Hz, state: ${this.audioContext.state})`);
             }
+
+            // Don't resume AudioContext here - Chrome requires user gesture
+            // We'll resume it in startRecording() when user clicks the mic button
 
             // List available audio devices
             try {
@@ -523,6 +538,17 @@ export class AudioProcessor {
         if (this.recording) {
             console.warn('[AudioProcessor] Already recording');
             return;
+        }
+
+        // Ensure AudioContext is running (critical for Chrome)
+        console.log(`[AudioProcessor] AudioContext state before recording: ${this.audioContext.state}`);
+        if (this.audioContext.state === 'suspended') {
+            console.log('[AudioProcessor] Resuming AudioContext for recording...');
+            this.audioContext.resume().then(() => {
+                console.log(`[AudioProcessor] AudioContext resumed: ${this.audioContext.state}`);
+            }).catch(err => {
+                console.error('[AudioProcessor] Failed to resume AudioContext:', err);
+            });
         }
 
         // Reset samples buffer
