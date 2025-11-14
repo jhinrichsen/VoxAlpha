@@ -81,19 +81,12 @@ The `voxalpha` binary embeds all web assets from `dist/`.
 
 ### Cloudflare Pages
 
-```bash
-# Install Wrangler CLI (once)
-npm install -g wrangler
+**Not supported:** Cloudflare Pages has a 25MB file size limit per file. The Whisper model (253MB) exceeds this limit, making Cloudflare Pages unsuitable for this application.
 
-# Login to Cloudflare (once)
-wrangler login
-
-# Download model and deploy
-make download-model
-wrangler pages deploy dist --project-name=voxalpha
-```
-
-**Note:** The `dist/_headers` file is Cloudflare Pages-specific and sets required CORS headers (COOP/COEP) for whisper.cpp WASM support. Other hosting platforms may require different configuration.
+Alternative hosting options:
+- Self-hosted with Go binary (recommended)
+- Cloudflare Workers with R2 storage (requires CORS configuration)
+- Traditional web hosting with sufficient file size limits
 
 ## Technology
 
