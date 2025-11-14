@@ -64,6 +64,8 @@ See [MODEL_COMPARISON.md](MODEL_COMPARISON.md) for model details.
 
 ## Deployment
 
+### Self-hosted (Go Binary)
+
 ```bash
 # Download model
 make download-model
@@ -76,6 +78,22 @@ make build
 ```
 
 The `voxalpha` binary embeds all web assets from `dist/`.
+
+### Cloudflare Pages
+
+```bash
+# Install Wrangler CLI (once)
+npm install -g wrangler
+
+# Login to Cloudflare (once)
+wrangler login
+
+# Download model and deploy
+make download-model
+wrangler pages deploy dist --project-name=voxalpha
+```
+
+**Note:** The `dist/_headers` file is Cloudflare Pages-specific and sets required CORS headers (COOP/COEP) for whisper.cpp WASM support. Other hosting platforms may require different configuration.
 
 ## Technology
 

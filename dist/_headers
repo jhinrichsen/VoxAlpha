@@ -1,0 +1,5 @@
+# Cloudflare Pages headers
+# Required for whisper.cpp WASM (SharedArrayBuffer support)
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
