@@ -4,9 +4,8 @@
  * Version: __VERSION__
  */
 
-// Cache names
+// Cache name
 const CACHE_NAME = 'voxalpha-v1';
-const RUNTIME_CACHE = 'voxalpha-runtime-v1';
 
 // Core files that must be cached for offline functionality
 const CORE_ASSETS = [
@@ -59,9 +58,7 @@ self.addEventListener('activate', (event) => {
             .then((cacheNames) => {
                 return Promise.all(
                     cacheNames
-                        .filter((cacheName) => {
-                            return cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE;
-                        })
+                        .filter((cacheName) => cacheName !== CACHE_NAME)
                         .map((cacheName) => {
                             console.log('[ServiceWorker] Deleting old cache:', cacheName);
                             return caches.delete(cacheName);
@@ -120,7 +117,7 @@ self.addEventListener('fetch', (event) => {
                         const responseToCache = response.clone();
 
                         // Cache the fetched response for future use
-                        caches.open(RUNTIME_CACHE)
+                        caches.open(CACHE_NAME)
                             .then((cache) => {
                                 console.log('[ServiceWorker] Caching new resource:', request.url);
                                 cache.put(request, responseToCache);
@@ -158,57 +155,10 @@ self.addEventListener('fetch', (event) => {
 });
 
 /**
- * Message event - handle commands from the app
+ * Message event - handle update requests
  */
 self.addEventListener('message', (event) => {
-    console.log('[ServiceWorker] Message received:', event.data);
-
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
-
-    if (event.data && event.data.type === 'CACHE_URLS') {
-        const urls = event.data.urls;
-        event.waitUntil(
-            caches.open(RUNTIME_CACHE)
-                .then((cache) => {
-                    console.log('[ServiceWorker] Caching URLs:', urls);
-                    return cache.addAll(urls);
-                })
-        );
-    }
-
-    if (event.data && event.data.type === 'CLEAR_CACHE') {
-        event.waitUntil(
-            caches.keys()
-                .then((cacheNames) => {
-                    return Promise.all(
-                        cacheNames.map((cacheName) => {
-                            console.log('[ServiceWorker] Clearing cache:', cacheName);
-                            return caches.delete(cacheName);
-                        })
-                    );
-                })
-        );
-    }
 });
-
-/**
- * Sync event - handle background sync (future enhancement)
- */
-self.addEventListener('sync', (event) => {
-    console.log('[ServiceWorker] Sync event:', event.tag);
-
-    if (event.tag === 'sync-practice-data') {
-        // Future: sync practice history when back online
-        event.waitUntil(syncPracticeData());
-    }
-});
-
-/**
- * Sync practice data (placeholder for future implementation)
- */
-async function syncPracticeData() {
-    console.log('[ServiceWorker] Syncing practice data...');
-    // Future implementation: sync with server if needed
-}
