@@ -4,8 +4,8 @@
  * Version: __VERSION__
  */
 
-// Cache name
-const CACHE_NAME = 'voxalpha';
+// Cache name includes version for atomic updates
+const CACHE_NAME = 'voxalpha-__VERSION__';
 
 // Core files that must be cached for offline functionality
 const CORE_ASSETS = [
