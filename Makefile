@@ -41,9 +41,11 @@ RCLONE_DEST = :sftp:$(SFTP_TARGET)/ --sftp-host=$(SFTP_SERVER) --sftp-user=$(SFT
 
 .PHONY: deploy deploy-dry deploy-model
 deploy:
-	@echo "Updating version to $(VERSION)..."
-	@sed -i "s/const VERSION = '[^']*'/const VERSION = '$(VERSION)'/" dist/service-worker.js
+	@echo "Injecting version $(VERSION) into index.html..."
+	@sed -i "s/__VERSION__/$(VERSION)/" dist/index.html
 	rclone sync dist/ $(RCLONE_DEST) --exclude '*.bin' --exclude '.wrangler/**'
+	@echo "Restoring placeholder..."
+	@sed -i "s/$(VERSION)/__VERSION__/" dist/index.html
 
 deploy-dry:
 	@echo "Version would be: $(VERSION)"
@@ -69,14 +71,12 @@ release:
 		exit 1; \
 	fi; \
 	echo "Current version: $$VERSION"; \
-	echo "Updating dist/service-worker.js..."; \
-	sed -i "s/const VERSION = '[^']*'/const VERSION = '$$VERSION'/" dist/service-worker.js; \
-	echo "✓ Updated dist/service-worker.js to $$VERSION"; \
 	echo "Rebuilding binary with version..."; \
 	$(GO) build -ldflags "-X 'main.version=$$VERSION'" -o $(BINARY) .; \
 	echo "✓ Built $(BINARY) $$VERSION"; \
 	echo ""; \
 	echo "🎉 Release $$VERSION ready!"; \
 	echo "   - Git tag: v$$VERSION"; \
-	echo "   - Service worker: $$VERSION"; \
-	echo "   - Go binary: $$VERSION"
+	echo "   - Go binary: $$VERSION"; \
+	echo ""; \
+	echo "Run 'make deploy' to deploy with version $$VERSION"

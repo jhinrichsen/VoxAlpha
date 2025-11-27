@@ -453,6 +453,13 @@ footer {
     color: white;
 }
 
+.version-indicator {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    opacity: 0.6;
+    font-family: monospace;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
     h1 {

@@ -3,10 +3,9 @@
  * Handles offline caching and resource management
  */
 
-// Version information - update this for new releases
-const VERSION = '1.1.0';
-const CACHE_NAME = `voxalpha-${VERSION.replace(/\./g, '-')}`;
-const RUNTIME_CACHE = `voxalpha-runtime-${VERSION.replace(/\./g, '-')}`;
+// Cache names - any change to this file triggers an update
+const CACHE_NAME = 'voxalpha-v1';
+const RUNTIME_CACHE = 'voxalpha-runtime-v1';
 
 // Core files that must be cached for offline functionality
 const CORE_ASSETS = [
