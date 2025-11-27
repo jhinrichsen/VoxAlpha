@@ -11,6 +11,7 @@ const CACHE_NAME = 'voxalpha-__VERSION__';
 const CORE_ASSETS = [
     './',
     './index.html',
+    './voxalpha.html',
     './style.css',
     './script.js',
     './storage.js',

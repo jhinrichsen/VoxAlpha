@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoxAlpha - Speech Spelling Trainer</title>
+    <meta name="description" content="Master the phonetic alphabet with voice recognition">
+    <meta name="keywords" content="Deutsche Buchstabiertafel, DIN 5009, NATO phonetic alphabet, spelling trainer">
+    <meta name="standard-de" content="Deutsche Buchstabiertafel für Wirtschaft und Verwaltung (DIN 5009:2022-06)">
+    <meta name="theme-color" content="#1a1a1a">
+    <title>VoxAlpha</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Whisper WASM setup -->
+    <script src="lib/whisper/coi-serviceworker.js"></script>
+    <script src="lib/whisper/helpers.js"></script>
+    <div class="container">
+        <!-- Update notification banner -->
+        <div id="update-banner" class="update-banner hidden">
+            <div class="update-content">
+                <span class="update-icon">🔄</span>
+                <span class="update-message">New version available!</span>
+                <button id="update-btn" class="update-btn">Update Now</button>
+                <button id="dismiss-update-btn" class="dismiss-btn">×</button>
+            </div>
+        </div>
+
+        <header>
+            <h1>VoxAlpha</h1>
+            <div class="language-toggle">
+                <button id="lang-de" class="lang-btn" data-lang="de">DE</button>
+                <button id="lang-en" class="lang-btn active" data-lang="en">EN</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="mode-selector">
+                <button id="mode-input" class="mode-btn active" data-mode="input">Practice: Type & Listen</button>
+                <button id="mode-output" class="mode-btn" data-mode="output">Practice: Listen & Speak</button>
+            </div>
+
+            <div id="input-mode" class="mode-content active">
+                <div class="input-section">
+                    <label id="input-mode-label" for="alphabet-grid">Click letters to hear the code words:</label>
+                </div>
+                <div class="alphabet-grid" id="alphabet-grid"></div>
+                <div class="output-section">
+                    <div id="spelled-output"></div>
+                </div>
+            </div>
+
+            <div id="output-mode" class="mode-content">
+                <div class="output-grid">
+                    <div class="challenge-column">
+                        <div class="current-letter" id="current-letter">A</div>
+                        <div class="expected-word" id="expected-word">Alpha</div>
+                    </div>
+                    <div class="recording-column">
+                        <button id="record-btn" class="record-btn">
+                            <span class="mic-icon">🎤</span>
+                            <span class="btn-text">Hold to Speak</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="transcription" class="transcription"></div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="status" id="status">Ready</div>
+            <div class="footer-right">
+                <div id="alphabet-standard" class="alphabet-standard"></div>
+                <div class="model-status">
+                    <span id="stt-status" class="model-indicator">STT: Not loaded</span>
+                    <span id="tts-status" class="model-indicator">TTS: Not loaded</span>
+                    <span class="version-indicator">__VERSION__</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Whisper WASM Module - loaded before main script -->
+    <script>
+        // Configure Whisper Module with dynamic callbacks
+        window.whisperPrintCallback = null;
+        window.whisperPrintErrCallback = null;
+
+        var Module = {
+            print: function(text) {
+                console.log('[Whisper]', text);
+                if (window.whisperPrintCallback) {
+                    try {
+                        window.whisperPrintCallback(text);
+                    } catch (err) {
+                        console.error('[Whisper] Callback error:', err);
+                    }
+                } else {
+                    console.log('[Whisper] No printCallback set');
+                }
+            },
+            printErr: function(text) {
+                console.error('[Whisper]', text);
+                if (window.whisperPrintErrCallback) {
+                    try {
+                        window.whisperPrintErrCallback(text);
+                    } catch (err) {
+                        console.error('[Whisper] Callback error:', err);
+                    }
+                } else {
+                    console.log('[Whisper] No printErrCallback set');
+                }
+            },
+            setStatus: function(text) { console.log('[Whisper Status]', text); },
+            monitorRunDependencies: function(left) { }
+        };
+
+        // IndexedDB config for model caching
+        let dbVersion = 1;
+        let dbName = 'VoxAlphaWhisper';
+
+        // Debug: Check SharedArrayBuffer availability
+        console.log('[Whisper Status] SharedArrayBuffer available:', typeof SharedArrayBuffer !== 'undefined');
+        console.log('[Whisper Status] crossOriginIsolated:', crossOriginIsolated);
+    </script>
+    <script src="lib/whisper/main.js"></script>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>

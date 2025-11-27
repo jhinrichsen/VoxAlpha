@@ -2,7 +2,7 @@
   "name": "VoxAlpha",
   "short_name": "VoxAlpha",
   "description": "Offline Speech Spelling Trainer for DIN 5009 and NATO/ICAO alphabets",
-  "start_url": "./",
+  "start_url": "./voxalpha.html",
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#1a1a1a",

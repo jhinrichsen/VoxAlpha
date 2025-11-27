@@ -3,130 +3,509 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoxAlpha - Speech Spelling Trainer</title>
-    <meta name="description" content="Master the phonetic alphabet with voice recognition">
-    <meta name="keywords" content="Deutsche Buchstabiertafel, DIN 5009, NATO phonetic alphabet, spelling trainer">
-    <meta name="standard-de" content="Deutsche Buchstabiertafel für Wirtschaft und Verwaltung (DIN 5009:2022-06)">
-    <meta name="theme-color" content="#1a1a1a">
-    <title>VoxAlpha</title>
+
+    <!-- SEO Meta Tags -->
+    <title>VoxAlpha - Offline Speech Spelling Trainer for DIN 5009 & NATO Phonetic Alphabet</title>
+    <meta name="description" content="Master the phonetic alphabet with VoxAlpha. Practice DIN 5009 (German) and NATO/ICAO spelling alphabets offline with speech recognition. Free, privacy-focused web app.">
+    <meta name="keywords" content="DIN 5009, NATO phonetic alphabet, ICAO spelling alphabet, Deutsche Buchstabiertafel, speech recognition, spelling trainer, offline app, PWA">
+    <meta name="author" content="VoxAlpha">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://kambrium.net/VoxAlpha/">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kambrium.net/VoxAlpha/">
+    <meta property="og:title" content="VoxAlpha - Phonetic Alphabet Trainer">
+    <meta property="og:description" content="Master DIN 5009 and NATO phonetic alphabets with offline speech recognition. Free PWA app.">
+    <meta property="og:image" content="./icons/icon-512x512.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="VoxAlpha - Phonetic Alphabet Trainer">
+    <meta name="twitter:description" content="Master DIN 5009 and NATO phonetic alphabets with offline speech recognition.">
+    <meta name="twitter:image" content="./icons/icon-512x512.png">
+
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#1a1a1a">
+
+    <!-- Structured Data for Search Engines -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "VoxAlpha",
+      "description": "Offline speech spelling trainer for DIN 5009 and NATO/ICAO phonetic alphabets",
+      "url": "https://kambrium.net/VoxAlpha/",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "DIN 5009 German spelling alphabet",
+        "NATO/ICAO international phonetic alphabet",
+        "Offline speech recognition",
+        "Privacy-focused (no tracking)",
+        "Progressive Web App (installable)"
+      ],
+      "browserRequirements": "Requires modern web browser with Web Speech API support"
+    }
+    </script>
+
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #1a1a1a;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #64748b;
+            --border: #e2e8f0;
+            --code-bg: #f1f5f9;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f172a;
+                --text: #f8fafc;
+                --primary: #3b82f6;
+                --primary-hover: #60a5fa;
+                --secondary: #94a3b8;
+                --border: #334155;
+                --code-bg: #1e293b;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 1.25rem;
+            color: var(--secondary);
+            margin-bottom: 2rem;
+        }
+
+        .lang-selector {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .lang-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .lang-btn:hover {
+            border-color: var(--primary);
+            background: var(--code-bg);
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: white;
+            background: var(--primary);
+            border: none;
+            border-radius: 0.75rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .cta-button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .content {
+            display: none;
+        }
+
+        .content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .feature {
+            padding: 1.5rem;
+            background: var(--code-bg);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+        }
+
+        .feature h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .alphabet-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .alphabet-card {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .alphabet-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .alphabet-card .standard {
+            font-size: 0.875rem;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+        }
+
+        .alphabet-card ul {
+            list-style: none;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .alphabet-card li {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            color: var(--secondary);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .tagline {
+                font-size: 1rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Whisper WASM setup -->
-    <script src="lib/whisper/coi-serviceworker.js"></script>
-    <script src="lib/whisper/helpers.js"></script>
     <div class="container">
-        <!-- Update notification banner -->
-        <div id="update-banner" class="update-banner hidden">
-            <div class="update-content">
-                <span class="update-icon">🔄</span>
-                <span class="update-message">New version available!</span>
-                <button id="update-btn" class="update-btn">Update Now</button>
-                <button id="dismiss-update-btn" class="dismiss-btn">×</button>
-            </div>
-        </div>
-
         <header>
             <h1>VoxAlpha</h1>
-            <div class="language-toggle">
-                <button id="lang-de" class="lang-btn" data-lang="de">DE</button>
-                <button id="lang-en" class="lang-btn active" data-lang="en">EN</button>
+            <p class="tagline">Master the Phonetic Alphabet with Speech Recognition</p>
+
+            <div class="lang-selector">
+                <button class="lang-btn active" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="de">Deutsch</button>
+                <button class="lang-btn" data-lang="zh">中文</button>
             </div>
+
+            <a href="./voxalpha.html" class="cta-button">Launch App</a>
         </header>
 
-        <main>
-            <div class="mode-selector">
-                <button id="mode-input" class="mode-btn active" data-mode="input">Practice: Type & Listen</button>
-                <button id="mode-output" class="mode-btn" data-mode="output">Practice: Listen & Speak</button>
-            </div>
+        <!-- English Content -->
+        <div class="content active" id="content-en">
+            <section>
+                <h2>What is VoxAlpha?</h2>
+                <p>VoxAlpha is a free, offline-capable web app that helps you master phonetic spelling alphabets through interactive practice and speech recognition. Perfect for professionals in aviation, telecommunications, emergency services, or anyone who needs to spell clearly over the phone.</p>
+            </section>
 
-            <div id="input-mode" class="mode-content active">
-                <div class="input-section">
-                    <label id="input-mode-label" for="alphabet-grid">Click letters to hear the code words:</label>
-                </div>
-                <div class="alphabet-grid" id="alphabet-grid"></div>
-                <div class="output-section">
-                    <div id="spelled-output"></div>
-                </div>
-            </div>
-
-            <div id="output-mode" class="mode-content">
-                <div class="output-grid">
-                    <div class="challenge-column">
-                        <div class="current-letter" id="current-letter">A</div>
-                        <div class="expected-word" id="expected-word">Alpha</div>
+            <section>
+                <h2>Key Features</h2>
+                <div class="features">
+                    <div class="feature">
+                        <h3>🗣️ Speech Recognition</h3>
+                        <p>Practice speaking the code words and get instant feedback with offline speech-to-text powered by Whisper.</p>
                     </div>
-                    <div class="recording-column">
-                        <button id="record-btn" class="record-btn">
-                            <span class="mic-icon">🎤</span>
-                            <span class="btn-text">Hold to Speak</span>
-                        </button>
+                    <div class="feature">
+                        <h3>🌍 Multiple Alphabets</h3>
+                        <p>Supports NATO/ICAO (English) and DIN 5009 (German) phonetic alphabets.</p>
+                    </div>
+                    <div class="feature">
+                        <h3>🔒 Privacy First</h3>
+                        <p>Everything runs locally in your browser. No data collection, no tracking, no accounts needed.</p>
+                    </div>
+                    <div class="feature">
+                        <h3>📱 Works Offline</h3>
+                        <p>Install as a Progressive Web App (PWA) and use it anywhere, anytime, even without internet.</p>
                     </div>
                 </div>
-                <div id="transcription" class="transcription"></div>
-            </div>
-        </main>
+            </section>
+
+            <section>
+                <h2>Phonetic Alphabets</h2>
+                <div class="alphabet-comparison">
+                    <div class="alphabet-card">
+                        <h3>NATO/ICAO</h3>
+                        <p class="standard">International Phonetic Alphabet (English Mode Default)</p>
+                        <ul>
+                            <li>A - Alpha</li>
+                            <li>B - Bravo</li>
+                            <li>C - Charlie</li>
+                            <li>D - Delta</li>
+                            <li>E - Echo</li>
+                            <li>...</li>
+                        </ul>
+                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--secondary);">Used globally in aviation, maritime, and telecommunications.</p>
+                    </div>
+
+                    <div class="alphabet-card">
+                        <h3>DIN 5009</h3>
+                        <p class="standard">Deutsche Buchstabiertafel (German Mode Default)</p>
+                        <ul>
+                            <li>A - Anton</li>
+                            <li>B - Berta</li>
+                            <li>C - Cäsar</li>
+                            <li>D - Dora</li>
+                            <li>E - Emil</li>
+                            <li>...</li>
+                        </ul>
+                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--secondary);">Standard for German business and administration (DIN 5009:2022-06).</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- German Content -->
+        <div class="content" id="content-de">
+            <section>
+                <h2>Was ist VoxAlpha?</h2>
+                <p>VoxAlpha ist eine kostenlose, offline-fähige Web-App, die Ihnen hilft, phonetische Buchstabiertafeln durch interaktives Üben und Spracherkennung zu meistern. Perfekt für Fachleute in der Luftfahrt, Telekommunikation, bei Rettungsdiensten oder für alle, die am Telefon klar buchstabieren müssen.</p>
+            </section>
+
+            <section>
+                <h2>Hauptfunktionen</h2>
+                <div class="features">
+                    <div class="feature">
+                        <h3>🗣️ Spracherkennung</h3>
+                        <p>Üben Sie das Sprechen der Codewörter und erhalten Sie sofortiges Feedback durch Offline-Spracherkennung mit Whisper.</p>
+                    </div>
+                    <div class="feature">
+                        <h3>🌍 Mehrere Alphabete</h3>
+                        <p>Unterstützt NATO/ICAO (Englisch) und DIN 5009 (Deutsch) Buchstabiertafeln.</p>
+                    </div>
+                    <div class="feature">
+                        <h3>🔒 Datenschutz zuerst</h3>
+                        <p>Alles läuft lokal in Ihrem Browser. Keine Datenerfassung, kein Tracking, keine Konten erforderlich.</p>
+                    </div>
+                    <div class="feature">
+                        <h3>📱 Funktioniert offline</h3>
+                        <p>Als Progressive Web App (PWA) installieren und überall, jederzeit nutzen, auch ohne Internet.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Buchstabiertafeln</h2>
+                <div class="alphabet-comparison">
+                    <div class="alphabet-card">
+                        <h3>NATO/ICAO</h3>
+                        <p class="standard">Internationales Buchstabieralphabet (Englisch-Modus Standard)</p>
+                        <ul>
+                            <li>A - Alpha</li>
+                            <li>B - Bravo</li>
+                            <li>C - Charlie</li>
+                            <li>D - Delta</li>
+                            <li>E - Echo</li>
+                            <li>...</li>
+                        </ul>
+                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--secondary);">Weltweit in der Luftfahrt, Schifffahrt und Telekommunikation verwendet.</p>
+                    </div>
+
+                    <div class="alphabet-card">
+                        <h3>DIN 5009</h3>
+                        <p class="standard">Deutsche Buchstabiertafel für Wirtschaft und Verwaltung (Deutsch-Modus Standard)</p>
+                        <ul>
+                            <li>A - Anton</li>
+                            <li>B - Berta</li>
+                            <li>C - Cäsar</li>
+                            <li>D - Dora</li>
+                            <li>E - Emil</li>
+                            <li>...</li>
+                        </ul>
+                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--secondary);">Standard für deutsche Wirtschaft und Verwaltung (DIN 5009:2022-06).</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Chinese Content -->
+        <div class="content" id="content-zh">
+            <section>
+                <h2>什么是 VoxAlpha？</h2>
+                <p>VoxAlpha 是一款免费的、可离线使用的网络应用，通过互动练习和语音识别帮助您掌握语音拼写字母表。非常适合航空、电信、紧急服务领域的专业人士，或任何需要在电话中清晰拼写的人。</p>
+            </section>
+
+            <section>
+                <h2>主要功能</h2>
+                <div class="features">
+                    <div class="feature">
+                        <h3>🗣️ 语音识别</h3>
+                        <p>练习说出代码词，通过 Whisper 离线语音转文字获得即时反馈。</p>
+                    </div>
+                    <div class="feature">
+                        <h3>🌍 多种字母表</h3>
+                        <p>支持 NATO/ICAO（英语）和 DIN 5009（德语）语音字母表。</p>
+                    </div>
+                    <div class="feature">
+                        <h3>🔒 隐私优先</h3>
+                        <p>所有内容都在您的浏览器本地运行。无数据收集、无跟踪、无需账户。</p>
+                    </div>
+                    <div class="feature">
+                        <h3>📱 离线工作</h3>
+                        <p>安装为渐进式网络应用（PWA），随时随地使用，即使没有互联网也可以。</p>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>语音字母表</h2>
+                <div class="alphabet-comparison">
+                    <div class="alphabet-card">
+                        <h3>NATO/ICAO</h3>
+                        <p class="standard">国际语音字母表（英语模式默认）</p>
+                        <ul>
+                            <li>A - Alpha</li>
+                            <li>B - Bravo</li>
+                            <li>C - Charlie</li>
+                            <li>D - Delta</li>
+                            <li>E - Echo</li>
+                            <li>...</li>
+                        </ul>
+                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--secondary);">全球航空、海事和电信领域使用。</p>
+                    </div>
+
+                    <div class="alphabet-card">
+                        <h3>DIN 5009</h3>
+                        <p class="standard">德国拼写字母表（德语模式默认）</p>
+                        <ul>
+                            <li>A - Anton</li>
+                            <li>B - Berta</li>
+                            <li>C - Cäsar</li>
+                            <li>D - Dora</li>
+                            <li>E - Emil</li>
+                            <li>...</li>
+                        </ul>
+                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--secondary);">德国商业和行政标准（DIN 5009:2022-06）。</p>
+                    </div>
+                </div>
+            </section>
+        </div>
 
         <footer>
-            <div class="status" id="status">Ready</div>
-            <div class="footer-right">
-                <div id="alphabet-standard" class="alphabet-standard"></div>
-                <div class="model-status">
-                    <span id="stt-status" class="model-indicator">STT: Not loaded</span>
-                    <span id="tts-status" class="model-indicator">TTS: Not loaded</span>
-                    <span class="version-indicator">__VERSION__</span>
-                </div>
-            </div>
+            <p>VoxAlpha is open source and privacy-focused. No tracking, no ads, no data collection.</p>
+            <p style="margin-top: 0.5rem; opacity: 0.7;">Built with Web Speech API and Whisper.cpp</p>
         </footer>
     </div>
 
-    <!-- Whisper WASM Module - loaded before main script -->
     <script>
-        // Configure Whisper Module with dynamic callbacks
-        window.whisperPrintCallback = null;
-        window.whisperPrintErrCallback = null;
+        // Language switcher
+        const langButtons = document.querySelectorAll('.lang-btn');
+        const contents = document.querySelectorAll('.content');
 
-        var Module = {
-            print: function(text) {
-                console.log('[Whisper]', text);
-                if (window.whisperPrintCallback) {
-                    try {
-                        window.whisperPrintCallback(text);
-                    } catch (err) {
-                        console.error('[Whisper] Callback error:', err);
-                    }
-                } else {
-                    console.log('[Whisper] No printCallback set');
-                }
-            },
-            printErr: function(text) {
-                console.error('[Whisper]', text);
-                if (window.whisperPrintErrCallback) {
-                    try {
-                        window.whisperPrintErrCallback(text);
-                    } catch (err) {
-                        console.error('[Whisper] Callback error:', err);
-                    }
-                } else {
-                    console.log('[Whisper] No printErrCallback set');
-                }
-            },
-            setStatus: function(text) { console.log('[Whisper Status]', text); },
-            monitorRunDependencies: function(left) { }
-        };
+        langButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.dataset.lang;
 
-        // IndexedDB config for model caching
-        let dbVersion = 1;
-        let dbName = 'VoxAlphaWhisper';
+                // Update buttons
+                langButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
 
-        // Debug: Check SharedArrayBuffer availability
-        console.log('[Whisper Status] SharedArrayBuffer available:', typeof SharedArrayBuffer !== 'undefined');
-        console.log('[Whisper Status] crossOriginIsolated:', crossOriginIsolated);
+                // Update content
+                contents.forEach(c => c.classList.remove('active'));
+                document.getElementById(`content-${lang}`).classList.add('active');
+
+                // Update HTML lang attribute for SEO
+                document.documentElement.lang = lang;
+            });
+        });
     </script>
-    <script src="lib/whisper/main.js"></script>
-
-    <script type="module" src="script.js"></script>
 </body>
 </html>

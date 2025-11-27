@@ -1,0 +1,54 @@
+# robots.txt for VoxAlpha
+
+# Allow landing page and static assets for SEO
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /favicon.svg
+Allow: /icons/
+Allow: /screenshots/
+Allow: /manifest.json
+
+# Disallow the app itself (no value in indexing the PWA)
+Disallow: /voxalpha.html
+Disallow: /script.js
+Disallow: /style.css
+Disallow: /storage.js
+Disallow: /whisper-wrapper.js
+Disallow: /tts-wrapper.js
+Disallow: /service-worker.js
+Disallow: /lib/
+Disallow: /*.bin$
+Disallow: /*.wasm$
+Disallow: /alphabets.json
+Disallow: /german-cities.txt
+Disallow: /clear-cache.html
+
+# AI/LLM Crawlers
+User-agent: GPTBot
+Allow: /
+Allow: /index.html
+Disallow: /voxalpha.html
+
+User-agent: ChatGPT-User
+Allow: /
+Allow: /index.html
+Disallow: /voxalpha.html
+
+User-agent: Google-Extended
+Allow: /
+Allow: /index.html
+Disallow: /voxalpha.html
+
+User-agent: anthropic-ai
+Allow: /
+Allow: /index.html
+Disallow: /voxalpha.html
+
+User-agent: Claude-Web
+Allow: /
+Allow: /index.html
+Disallow: /voxalpha.html
+
+# Sitemap (landing page only)
+Sitemap: https://kambrium.net/VoxAlpha/sitemap.xml
