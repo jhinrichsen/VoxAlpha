@@ -41,9 +41,12 @@ RCLONE_DEST = :sftp:$(SFTP_TARGET)/ --sftp-host=$(SFTP_SERVER) --sftp-user=$(SFT
 
 .PHONY: deploy deploy-dry deploy-model
 deploy:
+	@echo "Updating version to $(VERSION)..."
+	@sed -i "s/const VERSION = '[^']*'/const VERSION = '$(VERSION)'/" dist/service-worker.js
 	rclone sync dist/ $(RCLONE_DEST) --exclude '*.bin' --exclude '.wrangler/**'
 
 deploy-dry:
+	@echo "Version would be: $(VERSION)"
 	rclone sync dist/ $(RCLONE_DEST) --exclude '*.bin' --exclude '.wrangler/**' --dry-run
 
 deploy-model:

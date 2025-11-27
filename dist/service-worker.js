@@ -20,9 +20,10 @@ const CORE_ASSETS = [
     './whisper-wrapper.js',
     './tts-wrapper.js',
     './lib/whisper/main.js',
+    './lib/whisper/libmain.wasm',
     './lib/whisper/helpers.js',
-    './lib/whisper/coi-serviceworker.js',
-    './ggml-small-q8_0.bin'
+    './lib/whisper/coi-serviceworker.js'
+    // Note: Model file (ggml-small-q8_0.bin) is cached in IndexedDB by whisper-wrapper.js
 ];
 
 /**

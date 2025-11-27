@@ -202,6 +202,23 @@ class VoxAlpha {
             this.stopRecording();
         });
 
+        // Keyboard support for input mode
+        document.addEventListener('keydown', (e) => {
+            // Only in input mode
+            if (this.currentMode !== 'input') return;
+
+            // Ignore if typing in an input field
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            const key = e.key.toUpperCase();
+            const alphabet = this.alphabets[this.currentLanguage].alphabet;
+
+            if (alphabet[key]) {
+                e.preventDefault();
+                this.speakLetter(key, alphabet[key]);
+            }
+        });
+
         // Initialize first challenge
         this.nextChallenge();
     }
