@@ -5,7 +5,7 @@
  */
 
 // Cache name
-const CACHE_NAME = 'voxalpha-v1';
+const CACHE_NAME = 'voxalpha';
 
 // Core files that must be cached for offline functionality
 const CORE_ASSETS = [
