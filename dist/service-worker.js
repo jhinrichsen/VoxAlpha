@@ -4,7 +4,7 @@
  */
 
 // Version information - update this for new releases
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const CACHE_NAME = `voxalpha-${VERSION.replace(/\./g, '-')}`;
 const RUNTIME_CACHE = `voxalpha-runtime-${VERSION.replace(/\./g, '-')}`;
 
