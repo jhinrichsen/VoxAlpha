@@ -1,9 +1,10 @@
 /**
  * Service Worker for VoxAlpha
  * Handles offline caching and resource management
+ * Version: __VERSION__
  */
 
-// Cache names - any change to this file triggers an update
+// Cache names
 const CACHE_NAME = 'voxalpha-v1';
 const RUNTIME_CACHE = 'voxalpha-runtime-v1';
 

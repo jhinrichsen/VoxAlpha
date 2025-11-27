@@ -1,5 +1,6 @@
 GO ?= CGO_ENABLED=0 go
 BINARY ?= voxalpha
+# Always strip leading 'v' from git tag (v1.2.3 -> 1.2.3)
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "dev")
 
 .PHONY: all
@@ -41,11 +42,11 @@ RCLONE_DEST = :sftp:$(SFTP_TARGET)/ --sftp-host=$(SFTP_SERVER) --sftp-user=$(SFT
 
 .PHONY: deploy deploy-dry deploy-model
 deploy:
-	@echo "Injecting version $(VERSION) into index.html..."
-	@sed -i "s/__VERSION__/$(VERSION)/" dist/index.html
+	@echo "Injecting version $(VERSION)..."
+	@sed -i "s/__VERSION__/$(VERSION)/g" dist/index.html dist/service-worker.js
 	rclone sync dist/ $(RCLONE_DEST) --exclude '*.bin' --exclude '.wrangler/**'
-	@echo "Restoring placeholder..."
-	@sed -i "s/$(VERSION)/__VERSION__/" dist/index.html
+	@echo "Restoring placeholders..."
+	@sed -i "s/$(VERSION)/__VERSION__/g" dist/index.html dist/service-worker.js
 
 deploy-dry:
 	@echo "Version would be: $(VERSION)"
