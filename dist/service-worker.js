@@ -22,7 +22,7 @@ const CORE_ASSETS = [
     './lib/whisper/main.js',
     './lib/whisper/helpers.js',
     './lib/whisper/coi-serviceworker.js',
-    './lib/whisper/ggml-tiny-q5_1.bin'
+    './ggml-small-q8_0.bin'
 ];
 
 /**

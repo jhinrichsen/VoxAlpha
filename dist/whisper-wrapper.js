@@ -75,8 +75,8 @@ class WhisperSTT {
         console.log('[Whisper] Loading model...');
 
         // Check if external model URL is configured
-        let modelUrl = './lib/whisper/ggml-tiny-q5_1.bin';
-        let modelSize = 31; // MB
+        let modelUrl = './ggml-small-q8_0.bin';
+        let modelSize = 253; // MB
 
         try {
             const configResponse = await fetch('/api/config');

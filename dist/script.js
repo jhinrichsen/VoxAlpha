@@ -148,7 +148,7 @@ class VoxAlpha {
     async initSTT() {
         try {
             this.updateModelStatus('stt', 'loading');
-            this.updateStatus('Loading speech recognition model (this may take a minute)...');
+            this.updateStatus('Loading speech recognition model (this may take a minute)...', 'loading');
             await whisperSTT.init(this.currentLanguage);
             this.updateModelStatus('stt', 'loaded');
         } catch (error) {

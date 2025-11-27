@@ -1,0 +1,6 @@
+# WASM MIME type
+AddType application/wasm .wasm
+
+# Enable SharedArrayBuffer (required for Whisper WASM threading)
+Header set Cross-Origin-Opener-Policy "same-origin"
+Header set Cross-Origin-Embedder-Policy "require-corp"

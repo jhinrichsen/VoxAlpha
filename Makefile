@@ -33,6 +33,22 @@ download-model: $(MODEL_FILE)
 clean-model:
 	rm -f $(MODEL_FILE)
 
+# Deployment (requires rclone)
+SFTP_USER ?= kambriw
+SFTP_SERVER ?= www239.your-server.de
+SFTP_TARGET ?= public_html/VoxAlpha
+RCLONE_DEST = :sftp:$(SFTP_TARGET)/ --sftp-host=$(SFTP_SERVER) --sftp-user=$(SFTP_USER)
+
+.PHONY: deploy deploy-dry deploy-model
+deploy:
+	rclone sync dist/ $(RCLONE_DEST) --exclude '*.bin' --exclude '.wrangler/**'
+
+deploy-dry:
+	rclone sync dist/ $(RCLONE_DEST) --exclude '*.bin' --exclude '.wrangler/**' --dry-run
+
+deploy-model:
+	rclone copy dist/ggml-small-q8_0.bin $(RCLONE_DEST)
+
 # Release management
 .PHONY: release
 
