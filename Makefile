@@ -43,10 +43,14 @@ RCLONE_DEST = :sftp:$(SFTP_TARGET)/ --sftp-host=$(SFTP_SERVER) --sftp-user=$(SFT
 .PHONY: deploy deploy-dry deploy-model
 deploy:
 	@echo "Injecting version $(VERSION)..."
-	@sed -i "s/__VERSION__/$(VERSION)/g" dist/index.html dist/service-worker.js
+	@sed -i "s/voxalpha-[^'\"]*'/voxalpha-$(VERSION)'/" dist/service-worker.js
+	@sed -i 's/<span class="version-indicator">[^<]*/<span class="version-indicator">$(VERSION)/' dist/index.html
+	@sed -i 's/\* Version: .*/\* Version: $(VERSION)/' dist/service-worker.js
 	rclone sync dist/ $(RCLONE_DEST) --exclude '*.bin' --exclude '.wrangler/**'
 	@echo "Restoring placeholders..."
-	@sed -i "s/$(VERSION)/__VERSION__/g" dist/index.html dist/service-worker.js
+	@sed -i "s/voxalpha-$(VERSION)'/voxalpha-__VERSION__'/" dist/service-worker.js
+	@sed -i 's/<span class="version-indicator">$(VERSION)/<span class="version-indicator">__VERSION__/' dist/index.html
+	@sed -i 's/\* Version: $(VERSION)/\* Version: __VERSION__/' dist/service-worker.js
 
 deploy-dry:
 	@echo "Version would be: $(VERSION)"
