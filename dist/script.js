@@ -3,7 +3,6 @@
  * Offline Speech Spelling Trainer
  */
 
-import { storage } from './storage.js';
 import { whisperSTT, AudioProcessor } from './whisper-wrapper.js';
 import { espeakTTS } from './tts-wrapper.js';
 
@@ -23,6 +22,23 @@ class VoxAlpha {
     }
 
     /**
+     * Detect browser language preference
+     */
+    detectBrowserLanguage() {
+        // Get browser language (e.g., 'de-DE', 'en-US', 'de', 'en')
+        const browserLang = navigator.language || navigator.languages[0] || 'en';
+
+        // Extract language code (de-DE → de, en-US → en)
+        const langCode = browserLang.split('-')[0].toLowerCase();
+
+        // Map to supported languages (de or en), default to en
+        const supportedLang = (langCode === 'de') ? 'de' : 'en';
+
+        console.log(`[VoxAlpha] Browser language: ${browserLang} → ${supportedLang}`);
+        return supportedLang;
+    }
+
+    /**
      * Initialize the application
      */
     async init() {
@@ -32,12 +48,9 @@ class VoxAlpha {
 
             this.updateStatus('Initializing...');
 
-            // Initialize storage
-            await storage.init();
-            console.log('[VoxAlpha] Storage initialized');
-
-            // Load saved language preference
-            this.currentLanguage = await storage.getLanguage();
+            // Detect browser language preference
+            this.currentLanguage = this.detectBrowserLanguage();
+            console.log('[VoxAlpha] Using language:', this.currentLanguage);
 
             // Load alphabet data
             await this.loadAlphabets();
@@ -235,7 +248,6 @@ class VoxAlpha {
         }
 
         this.currentLanguage = lang;
-        await storage.saveLanguage(lang);
 
         // Update UI
         this.updateLanguageUI();

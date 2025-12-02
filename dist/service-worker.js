@@ -10,19 +10,16 @@ const CACHE_NAME = 'voxalpha-__VERSION__';
 // Core files that must be cached for offline functionality
 const CORE_ASSETS = [
     './',
-    './index.html',
     './voxalpha.html',
     './style.css',
     './script.js',
-    './storage.js',
     './manifest.json',
     './alphabets.json',
     './whisper-wrapper.js',
     './tts-wrapper.js',
     './lib/whisper/main.js',
     './lib/whisper/libmain.wasm',
-    './lib/whisper/helpers.js',
-    './lib/whisper/coi-serviceworker.js'
+    './lib/whisper/helpers.js'
     // Note: Model file (ggml-small-q8_0.bin) is cached in IndexedDB by whisper-wrapper.js
 ];
 
