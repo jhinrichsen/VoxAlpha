@@ -18,6 +18,10 @@ run:
 clean:
 	rm -f $(BINARY)
 
+.PHONY: test
+test:
+	$(GO) test -v ./tests/
+
 # Model management
 MODEL_URL = https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q8_0.bin
 MODEL_FILE = dist/ggml-small-q8_0.bin
