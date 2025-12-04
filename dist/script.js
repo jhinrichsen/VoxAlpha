@@ -442,7 +442,7 @@ class VoxAlpha {
 
         try {
             // Stop recording and get audio data
-            const audioData = await this.audioProcessor.stopRecording();
+            let audioData = await this.audioProcessor.stopRecording();
 
             if (!audioData || audioData.length === 0) {
                 this.elements.transcription.textContent = '(no audio recorded)';
@@ -451,7 +451,10 @@ class VoxAlpha {
 
             // Transcribe
             const transcription = await whisperSTT.transcribe(audioData);
-            
+
+            // Explicitly clear audio data after transcription to free memory
+            audioData = null;
+
             // Clear processing spinner
             this.elements.transcription.textContent = '';
 

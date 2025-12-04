@@ -10,7 +10,11 @@ class WhisperSTT {
         this.instance = null;
         this.language = 'en';
         this.transcriptionCount = 0;
-        this.maxTranscriptionsBeforeReload = 10; // Reload after 10 transcriptions to prevent OOM
+
+        // Instance reload disabled by default - only real leaks fixed (blob URLs, audioData)
+        // If iPhone still freezes, set this to 10 to reload instance periodically
+        this.maxTranscriptionsBeforeReload = Infinity;
+        console.log('[Whisper] Instance reload disabled - testing with blob/buffer cleanup only');
     }
 
     /**
@@ -66,6 +70,43 @@ class WhisperSTT {
                 reject(new Error('Whisper Module failed to initialize'));
             }, 10000);
         });
+    }
+
+    /**
+     * Reload Whisper instance (without reloading the model)
+     * This is much lighter than loadModel() - only recreates the instance
+     */
+    async reloadInstance() {
+        console.log('[Whisper] Reloading instance (keeping model in memory)...');
+
+        // Clean up old instance if exists
+        if (this.instance) {
+            try {
+                // Try to free the instance (if the WASM module supports it)
+                if (Module.free && typeof Module.free === 'function') {
+                    Module.free(this.instance);
+                    console.log('[Whisper] Old instance freed');
+                }
+            } catch (e) {
+                console.warn('[Whisper] Could not free old instance:', e);
+            }
+            this.instance = null;
+        }
+
+        // Recreate instance with existing model in WASM FS
+        const modelName = 'whisper.bin';
+        try {
+            this.instance = Module.init(modelName);
+            if (this.instance) {
+                console.log('[Whisper] New Whisper instance created:', this.instance);
+                return true;
+            } else {
+                throw new Error('Failed to create Whisper instance');
+            }
+        } catch (error) {
+            console.error('[Whisper] Failed to reload instance:', error);
+            throw error;
+        }
     }
 
     /**
@@ -183,11 +224,15 @@ class WhisperSTT {
 
         // Whisper expects minimum 1 second of audio
         const minSamples = 16000; // 1 second at 16kHz
+        let originalAudioData = null;
         if (audioData.length < minSamples) {
             console.warn(`[Whisper] Audio too short (${audioData.length} samples, need ${minSamples}). Padding with zeros.`);
+            originalAudioData = audioData; // Keep reference to clear later
             const padded = new Float32Array(minSamples);
             padded.set(audioData, 0);
             audioData = padded;
+            // Clear original short audio
+            originalAudioData = null;
         }
 
         try {
@@ -201,11 +246,11 @@ class WhisperSTT {
             // Auto-download the WAV file if ?download=1 or ?debug=1 query parameter is set
             const urlParams = new URLSearchParams(window.location.search);
             const shouldDownload = urlParams.get('download') === '1' || urlParams.get('debug') === '1';
-            
+
             if (shouldDownload) {
                 const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
                 const filename = `voxalpha-recording-${timestamp}.wav`;
-                
+
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = filename;
@@ -213,12 +258,16 @@ class WhisperSTT {
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                
+
                 console.log(`[Whisper] Auto-downloading captured audio as: ${filename}`);
                 console.log('[Whisper] File should appear in your Downloads folder');
+
+                // Clean up blob URL immediately after download trigger
+                setTimeout(() => URL.revokeObjectURL(url), 100);
             } else {
-                console.log(`[Whisper] Auto-download disabled. Blob URL: ${url}`);
-                console.log('[Whisper] Right-click the link above and "Save Link As" to download manually');
+                console.log(`[Whisper] Auto-download disabled. Blob URL created for debugging`);
+                // Clean up blob URL after short delay (to allow console inspection)
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
             }
 
             // Check if audio is completely silent before attempting transcription
@@ -335,20 +384,31 @@ class WhisperSTT {
 
             console.log(`[Whisper] Transcription result: "${result}"`);
 
-            // Increment transcription counter and check if we need to reload
+            // Explicitly clear audio data to free memory
+            audioData = null;
+
+            // Increment transcription counter and check if we need to reload instance
             this.transcriptionCount++;
             if (this.transcriptionCount >= this.maxTranscriptionsBeforeReload) {
                 console.log(`[Whisper] Reloading Whisper instance after ${this.transcriptionCount} transcriptions to prevent memory leak`);
                 this.transcriptionCount = 0;
-                // Reload the model to clear accumulated state
-                await this.loadModel();
+                // Reload only the instance (NOT the 253 MB model!) to clear accumulated state
+                await this.reloadInstance();
             }
 
             return result;
 
         } catch (error) {
             console.error('[Whisper] Transcription failed:', error);
+            // Clear audio data even on error
+            audioData = null;
             throw error;
+        } finally {
+            // Try to trigger garbage collection hint (non-standard, but helps where supported)
+            if (window.gc) {
+                console.log('[Whisper] Triggering manual GC');
+                window.gc();
+            }
         }
     }
 
@@ -627,7 +687,11 @@ export class AudioProcessor {
             offset += chunk.length;
         }
 
-        // Clear samples buffer
+        // Clear samples buffer and explicitly null references for GC
+        for (let i = 0; i < this.samples.length; i++) {
+            this.samples[i] = null;
+        }
+        this.samples.length = 0;
         this.samples = [];
 
         // Check audio levels before resampling
@@ -665,6 +729,8 @@ export class AudioProcessor {
             console.log(`[AudioProcessor] Resampling from ${this.audioContext.sampleRate}Hz to ${targetSampleRate}Hz`);
             const resampled = this.resample(result, this.audioContext.sampleRate, targetSampleRate);
             console.log(`[AudioProcessor] Resampled to ${resampled.length} samples (${(resampled.length / targetSampleRate).toFixed(2)}s)`);
+            // Clear original buffer after resampling
+            result.fill(0);
             return resampled;
         } else {
             console.log(`[AudioProcessor] Captured ${result.length} samples (${(result.length / targetSampleRate).toFixed(2)}s)`);

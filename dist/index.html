@@ -6,8 +6,8 @@
 
     <!-- SEO Meta Tags -->
     <title>VoxAlpha - Offline Speech Spelling Trainer for DIN 5009 & NATO Phonetic Alphabet</title>
-    <meta name="description" content="Master the phonetic alphabet with VoxAlpha. Practice DIN 5009 (German) and NATO/ICAO spelling alphabets offline with speech recognition. Free, privacy-focused web app.">
-    <meta name="keywords" content="DIN 5009, NATO phonetic alphabet, ICAO spelling alphabet, Deutsche Buchstabiertafel, speech recognition, spelling trainer, offline app, PWA">
+    <meta name="description" content="Master the phonetic alphabet with VoxAlpha. Practice DIN 5009:2022 with city names (Aachen, Bremen, Chemnitz) and NATO/ICAO spelling alphabets with fully offline speech recognition (Whisper WASM). Free, privacy-focused web app.">
+    <meta name="keywords" content="DIN 5009, DIN 5009:2022, Städte Buchstabiertafel, city-based spelling alphabet, NATO phonetic alphabet, ICAO spelling alphabet, Deutsche Buchstabiertafel, Aachen Bremen Chemnitz, speech recognition, spelling trainer, offline app, PWA">
     <meta name="author" content="VoxAlpha">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://kambrium.net/VoxAlpha/">
@@ -16,13 +16,13 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://kambrium.net/VoxAlpha/">
     <meta property="og:title" content="VoxAlpha - Phonetic Alphabet Trainer">
-    <meta property="og:description" content="Master DIN 5009 and NATO phonetic alphabets with offline speech recognition. Free PWA app.">
+    <meta property="og:description" content="Master DIN 5009:2022 (city-based: Aachen, Bremen, Chemnitz) and NATO phonetic alphabets with offline speech recognition. Free PWA app.">
     <meta property="og:image" content="./icons/icon-512x512.png">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="VoxAlpha - Phonetic Alphabet Trainer">
-    <meta name="twitter:description" content="Master DIN 5009 and NATO phonetic alphabets with offline speech recognition.">
+    <meta name="twitter:description" content="Master DIN 5009:2022 (city-based) and NATO phonetic alphabets with offline speech recognition.">
     <meta name="twitter:image" content="./icons/icon-512x512.png">
 
     <!-- Favicon -->
@@ -36,7 +36,7 @@
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "VoxAlpha",
-      "description": "Offline speech spelling trainer for DIN 5009 and NATO/ICAO phonetic alphabets",
+      "description": "Offline speech spelling trainer for DIN 5009:2022 (city-based: Aachen, Bremen, Chemnitz) and NATO/ICAO phonetic alphabets",
       "url": "https://kambrium.net/VoxAlpha/",
       "applicationCategory": "EducationalApplication",
       "operatingSystem": "Web Browser",
@@ -46,13 +46,13 @@
         "priceCurrency": "USD"
       },
       "featureList": [
-        "DIN 5009 German spelling alphabet",
+        "DIN 5009:2022 German spelling alphabet (city-based: Aachen, Bremen, Chemnitz, Dresden, etc.)",
         "NATO/ICAO international phonetic alphabet",
         "Offline speech recognition",
         "Privacy-focused (no tracking)",
         "Progressive Web App (installable)"
       ],
-      "browserRequirements": "Requires modern web browser with Web Speech API support"
+      "browserRequirements": "Requires modern web browser. Speech-to-text (STT) runs fully offline via Whisper WASM. Text-to-speech (TTS) currently uses Web Speech API."
     }
     </script>
 
@@ -301,8 +301,8 @@
                 <h2>Key Features</h2>
                 <div class="features">
                     <div class="feature">
-                        <h3>🗣️ Speech Recognition</h3>
-                        <p>Practice speaking the code words and get instant feedback with offline speech-to-text powered by Whisper.</p>
+                        <h3>🗣️ Offline Speech Recognition</h3>
+                        <p>Practice speaking the code words and get instant feedback with fully offline speech-to-text powered by Whisper WASM. Text-to-speech currently uses browser API.</p>
                     </div>
                     <div class="feature">
                         <h3>🌍 Multiple Alphabets</h3>
@@ -314,7 +314,7 @@
                     </div>
                     <div class="feature">
                         <h3>📱 Works Offline</h3>
-                        <p>Install as a Progressive Web App (PWA) and use it anywhere, anytime, even without internet.</p>
+                        <p>Install as a Progressive Web App (PWA). Speech recognition works fully offline via Whisper WASM, even without internet.</p>
                     </div>
                 </div>
             </section>
@@ -340,14 +340,14 @@
                         <h3>DIN 5009</h3>
                         <p class="standard">Deutsche Buchstabiertafel (German Mode Default)</p>
                         <ul>
-                            <li>A - Anton</li>
-                            <li>B - Berta</li>
-                            <li>C - Cäsar</li>
-                            <li>D - Dora</li>
-                            <li>E - Emil</li>
+                            <li>A - Aachen</li>
+                            <li>B - Bremen</li>
+                            <li>C - Chemnitz</li>
+                            <li>D - Dresden</li>
+                            <li>E - Erfurt</li>
                             <li>...</li>
                         </ul>
-                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--secondary);">Standard for German business and administration (DIN 5009:2022-06).</p>
+                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--secondary);">Standard for German business and administration (DIN 5009:2022-06). <strong>Uses city names</strong> instead of the old first-name system.</p>
                     </div>
                 </div>
             </section>
@@ -357,15 +357,15 @@
         <div class="content" id="content-de">
             <section>
                 <h2>Was ist VoxAlpha?</h2>
-                <p>VoxAlpha ist eine kostenlose, offline-fähige Web-App, die Ihnen hilft, phonetische Buchstabiertafeln durch interaktives Üben und Spracherkennung zu meistern. Perfekt für Fachleute in der Luftfahrt, Telekommunikation, bei Rettungsdiensten oder für alle, die am Telefon klar buchstabieren müssen.</p>
+		<p>VoxAlpha ist eine kostenlose, offline-fähige Web-App, die Ihnen hilft, phonetische Buchstabiertafeln durch interaktives Üben und Spracherkennung zu meistern. Perfekt für Fachleute in der Luftfahrt, Telekommunikation, bei Rettungsdiensten oder für alle, die einen schwierigeren Nachnamen als <i>Müller</i> haben.</p>
             </section>
 
             <section>
                 <h2>Hauptfunktionen</h2>
                 <div class="features">
                     <div class="feature">
-                        <h3>🗣️ Spracherkennung</h3>
-                        <p>Üben Sie das Sprechen der Codewörter und erhalten Sie sofortiges Feedback durch Offline-Spracherkennung mit Whisper.</p>
+                        <h3>🗣️ Offline-Spracherkennung</h3>
+                        <p>Üben Sie das Sprechen der Codewörter und erhalten Sie sofortiges Feedback durch vollständig offline Spracherkennung mit Whisper WASM. Sprachausgabe nutzt aktuell noch Browser-API.</p>
                     </div>
                     <div class="feature">
                         <h3>🌍 Mehrere Alphabete</h3>
@@ -377,7 +377,7 @@
                     </div>
                     <div class="feature">
                         <h3>📱 Funktioniert offline</h3>
-                        <p>Als Progressive Web App (PWA) installieren und überall, jederzeit nutzen, auch ohne Internet.</p>
+                        <p>Als Progressive Web App (PWA) installieren. Spracherkennung funktioniert vollständig offline über Whisper WASM, auch ohne Internet.</p>
                     </div>
                 </div>
             </section>
@@ -403,14 +403,14 @@
                         <h3>DIN 5009</h3>
                         <p class="standard">Deutsche Buchstabiertafel für Wirtschaft und Verwaltung (Deutsch-Modus Standard)</p>
                         <ul>
-                            <li>A - Anton</li>
-                            <li>B - Berta</li>
-                            <li>C - Cäsar</li>
-                            <li>D - Dora</li>
-                            <li>E - Emil</li>
+                            <li>A - Aachen</li>
+                            <li>B - Bremen</li>
+                            <li>C - Chemnitz</li>
+                            <li>D - Dresden</li>
+                            <li>E - Erfurt</li>
                             <li>...</li>
                         </ul>
-                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--secondary);">Standard für deutsche Wirtschaft und Verwaltung (DIN 5009:2022-06).</p>
+                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--secondary);">Standard für deutsche Wirtschaft und Verwaltung (DIN 5009:2022-06). <strong>Verwendet Städtenamen</strong> statt des alten Vornamensystems.</p>
                     </div>
                 </div>
             </section>
@@ -427,8 +427,8 @@
                 <h2>主要功能</h2>
                 <div class="features">
                     <div class="feature">
-                        <h3>🗣️ 语音识别</h3>
-                        <p>练习说出代码词，通过 Whisper 离线语音转文字获得即时反馈。</p>
+                        <h3>🗣️ 离线语音识别</h3>
+                        <p>练习说出代码词，通过 Whisper WASM 完全离线语音转文字获得即时反馈。文字转语音目前使用浏览器API。</p>
                     </div>
                     <div class="feature">
                         <h3>🌍 多种字母表</h3>
@@ -440,7 +440,7 @@
                     </div>
                     <div class="feature">
                         <h3>📱 离线工作</h3>
-                        <p>安装为渐进式网络应用（PWA），随时随地使用，即使没有互联网也可以。</p>
+                        <p>安装为渐进式网络应用（PWA）。语音识别通过 Whisper WASM 完全离线工作，即使没有互联网也可以。</p>
                     </div>
                 </div>
             </section>
@@ -466,14 +466,14 @@
                         <h3>DIN 5009</h3>
                         <p class="standard">德国拼写字母表（德语模式默认）</p>
                         <ul>
-                            <li>A - Anton</li>
-                            <li>B - Berta</li>
-                            <li>C - Cäsar</li>
-                            <li>D - Dora</li>
-                            <li>E - Emil</li>
+                            <li>A - Aachen (亚琛)</li>
+                            <li>B - Bremen (不来梅)</li>
+                            <li>C - Chemnitz (开姆尼茨)</li>
+                            <li>D - Dresden (德累斯顿)</li>
+                            <li>E - Erfurt (埃尔福特)</li>
                             <li>...</li>
                         </ul>
-                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--secondary);">德国商业和行政标准（DIN 5009:2022-06）。</p>
+                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--secondary);">德国商业和行政标准（DIN 5009:2022-06）。<strong>使用城市名称</strong>代替旧的人名系统。</p>
                     </div>
                 </div>
             </section>
@@ -481,7 +481,7 @@
 
         <footer>
             <p>VoxAlpha is open source and privacy-focused. No tracking, no ads, no data collection.</p>
-            <p style="margin-top: 0.5rem; opacity: 0.7;">Built with Web Speech API and Whisper.cpp</p>
+            <p style="margin-top: 0.5rem; opacity: 0.7;">Built with Whisper.cpp (offline STT) and Web Speech API (TTS)</p>
         </footer>
     </div>
 
