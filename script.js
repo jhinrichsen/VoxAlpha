@@ -555,7 +555,7 @@ class VoxAlpha {
 
         // Special handling for Umlaut entries (Ä, Ö, Ü) which are not real cities
         const isUmlautEntry = this.currentChallenge.word.includes('Umlaut');
-        
+
         // If German language and cities list is loaded (and not an umlaut entry), use multi-candidate matching
         if (this.currentLanguage === 'de' && this.germanCities.length > 0 && !isUmlautEntry) {
             this.checkAnswerWithCities(normalized, expected);
@@ -615,7 +615,7 @@ class VoxAlpha {
             : bestMatches[0];
 
         console.log(`[VoxAlpha] Best match: "${bestMatch}" (${(bestSimilarity * 100).toFixed(1)}%), expected: "${this.currentChallenge.word}"`);
-        
+
         // Show top 3 alternatives for debugging
         const top3 = [];
         for (const city of citiesToSearch) {
@@ -623,14 +623,14 @@ class VoxAlpha {
             const distance = this.levenshteinDistance(normalized, normalizedCity);
             const maxLength = Math.max(normalized.length, normalizedCity.length);
             let similarity = 1 - (distance / maxLength);
-            
+
             // Apply same penalty as above
             const lengthDiff = Math.abs(normalized.length - normalizedCity.length);
             similarity -= lengthDiff * 0.05;
-            
+
             // Cap similarity at 1.0 (100%)
             similarity = Math.min(1.0, similarity);
-            
+
             top3.push({ city, similarity });
         }
         top3.sort((a, b) => b.similarity - a.similarity);
