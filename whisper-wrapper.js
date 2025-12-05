@@ -148,7 +148,10 @@ class WhisperSTT {
         // Use the loadRemote function from helpers.js
         return new Promise((resolve, reject) => {
             const cbProgress = (progress) => {
-                // Suppress progress messages for cleaner console
+                // Update progress bar if callback exists
+                if (window.whisperProgressCallback) {
+                    window.whisperProgressCallback(progress);
+                }
             };
 
             const cbReady = (dst, data) => {

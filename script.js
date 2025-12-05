@@ -160,12 +160,23 @@ class VoxAlpha {
      */
     async initSTT() {
         try {
-            this.updateModelStatus('stt', 'loading');
-            this.updateStatus('Loading speech recognition model (this may take a minute)...', 'loading');
+            this.updateModelStatus('stt', 'loading', 0);
+            this.updateStatus('Loading speech recognition model (253 MB, will be cached)...', 'loading');
+
+            // Set up progress callback
+            window.whisperProgressCallback = (progress) => {
+                this.updateModelStatus('stt', 'loading', progress);
+            };
+
             await whisperSTT.init(this.currentLanguage);
+
+            // Clean up callback
+            window.whisperProgressCallback = null;
+
             this.updateModelStatus('stt', 'loaded');
         } catch (error) {
             console.error('[VoxAlpha] STT initialization failed:', error);
+            window.whisperProgressCallback = null;
             this.updateModelStatus('stt', 'error');
             throw error;
         }
@@ -687,18 +698,25 @@ class VoxAlpha {
     /**
      * Update model status indicator
      */
-    updateModelStatus(model, status) {
+    updateModelStatus(model, status, progress = null) {
         const element = model === 'stt' ? this.elements.sttStatus : this.elements.ttsStatus;
         const prefix = model === 'stt' ? 'STT' : 'TTS';
 
         const messages = {
-            loading: `${prefix}: Loading...`,
+            loading: progress !== null ? `${prefix}: ${Math.round(progress * 100)}%` : `${prefix}: Loading...`,
             loaded: `${prefix}: Ready`,
             error: `${prefix}: Error`
         };
 
         element.textContent = messages[status] || `${prefix}: ${status}`;
         element.className = `model-indicator ${status}`;
+
+        // Update progress bar if exists
+        if (status === 'loading' && progress !== null) {
+            element.style.background = `linear-gradient(to right, var(--warning) ${progress * 100}%, var(--bg-secondary) ${progress * 100}%)`;
+        } else {
+            element.style.background = '';
+        }
     }
 
     /**
