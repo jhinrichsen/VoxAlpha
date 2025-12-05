@@ -1,7 +1,7 @@
 GO ?= CGO_ENABLED=0 go
 BINARY ?= dist/voxalpha
-# Always strip leading 'v' from git tag (v1.2.3 -> 1.2.3)
-VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "dev")
+# Always strip leading 'v' from git tag (v1.2.3 -> 1.2.3, v1.2.3-5-gabc123 -> 1.2.3-5-gabc123)
+VERSION ?= $(shell git describe --tags 2>/dev/null | sed 's/^v//' || echo "dev")
 LDFLAGS = -X main.version=$(VERSION)
 DISTFLAGS = -trimpath -ldflags "-s -w $(LDFLAGS)"
 
