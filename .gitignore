@@ -1,6 +1,7 @@
 # Generated build output directory
 # Contains: dist/pwa/ (PWA build), dist/{GOOS}/{GOARCH}/ (Go binaries), models (*.bin)
 dist/
+.version
 
 # Whisper-cpp directory
 whisper-cpp/

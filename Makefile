@@ -46,7 +46,7 @@ clean: ## Remove build artifacts
 
 .PHONY: pwa
 pwa: $(PWA_TARGETS) ## Build PWA with file-based targets
-	@echo "✓ PWA built in dist/pwa/ (version: $(VERSION))"
+	echo "✓ PWA built in dist/pwa/ (version: $(VERSION))"
 
 # Pattern rules for simple file copies (install -D creates dirs, -m 644 = rw-r--r--)
 dist/pwa/%.html: %.html
@@ -80,18 +80,25 @@ dist/pwa/icons/%.png: icons/%.png
 dist/pwa/screenshots/%.png: screenshots/%.png
 	install -D -m 644 $< $@
 
-# Special rules for version injection (still need mkdir for redirection)
-dist/pwa/service-worker.js: service-worker.js
+# Version tracking - regenerate .version when git tag changes
+.version: FORCE
+	@echo "$(VERSION)" | cmp -s - $@ || echo "$(VERSION)" > $@
+
+.PHONY: FORCE
+FORCE:
+
+# Special rules for version injection (depend on .version to rebuild when tag changes)
+dist/pwa/service-worker.js: service-worker.js .version
 	mkdir -p $(@D)
 	sed "s/__VERSION__/$(VERSION)/g" $< > $@
 
-dist/pwa/voxalpha.html: voxalpha.html
+dist/pwa/voxalpha.html: voxalpha.html .version
 	mkdir -p $(@D)
 	sed "s/__VERSION__/$(VERSION)/g" $< > $@
 
 .PHONY: build
 build: pwa ## Build Go binary (requires PWA build first)
-	@mkdir -p $(dir $(BINARY))
+	mkdir -p $(dir $(BINARY))
 	$(GO) build -ldflags "-X 'main.version=$(VERSION)'" -o $(BINARY) .
 
 .PHONY: run
@@ -107,9 +114,9 @@ MODEL_URL = https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small
 MODEL_FILE = dist/ggml-small-q8_0.bin
 
 $(MODEL_FILE):
-	@echo "Downloading Whisper small model (253MB)..."
+	echo "Downloading Whisper small model (253MB)..."
 	curl -L -o $@ $(MODEL_URL)
-	@echo "✓ Model downloaded"
+	echo "✓ Model downloaded"
 
 .PHONY: download-model
 download-model: $(MODEL_FILE)
@@ -121,7 +128,7 @@ clean-model:
 # Cross-platform builds
 .PHONY: dist
 dist: pwa
-	@mkdir -p dist/$$GOOS/$$GOARCH
+	mkdir -p dist/$$GOOS/$$GOARCH
 	$(GO) build $(DISTFLAGS) -o dist/$$GOOS/$$GOARCH/ .
 
 .PHONY: dists
@@ -134,7 +141,7 @@ dists: clean pwa ## Build for all platforms
 	GOOS=darwin GOARCH=arm64 $(MAKE) dist
 	GOOS=windows GOARCH=amd64 $(MAKE) dist
 	GOOS=windows GOARCH=arm64 $(MAKE) dist
-	@echo "✓ Built binaries for all platforms in dist/"
+	echo "✓ Built binaries for all platforms in dist/"
 
 # Deployment (requires rclone)
 SFTP_USER ?= kambriw
@@ -144,13 +151,13 @@ RCLONE_DEST = :sftp:$(SFTP_TARGET)/ --sftp-host=$(SFTP_SERVER) --sftp-user=$(SFT
 
 .PHONY: deploy
 deploy: pwa ## Deploy PWA to server
-	@echo "Deploying PWA (version $(VERSION))..."
+	echo "Deploying PWA (version $(VERSION))..."
 	rclone sync dist/pwa/ $(RCLONE_DEST) --exclude '*.bin'
-	@echo "✓ Deployed to $(SFTP_SERVER):$(SFTP_TARGET)"
+	echo "✓ Deployed to $(SFTP_SERVER):$(SFTP_TARGET)"
 
 .PHONY: deploy-dry
 deploy-dry: pwa ## Dry-run deployment
-	@echo "Version would be: $(VERSION)"
+	echo "Version would be: $(VERSION)"
 	rclone sync dist/pwa/ $(RCLONE_DEST) --exclude '*.bin' --dry-run
 
 .PHONY: deploy-model

@@ -88,6 +88,23 @@ Alternative hosting options:
 - Cloudflare Workers with R2 storage (requires CORS configuration)
 - Traditional web hosting with sufficient file size limits
 
+## Versioning
+
+Versioning is completely driven by git tags. No manual file editing, no version numbers in package.json or pom.xml.
+
+- Git tags follow semantic versioning with leading `v`: `v1.6.0`
+- Versions used in code have no leading `v`: `1.6.0`
+
+Creating a tag in git forges (GitHub, GitLab, etc.) automatically creates releases without editing any files.
+
+Create a new version:
+```bash
+git tag v1.6.0
+make deploy
+```
+
+Version changes trigger PWA cache updates on user devices. The service worker detects the new version and downloads updated assets. The Whisper model (253MB) is cached separately in IndexedDB and persists across version updates, so users don't re-download it.
+
 ## Technology
 
 - Plain HTML/CSS/JavaScript (no frameworks)
