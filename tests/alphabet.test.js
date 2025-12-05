@@ -8,7 +8,7 @@ let alphabets;
 
 beforeAll(async () => {
     // Load alphabet data
-    const response = await fetch('../data/alphabets.json');
+    const response = await fetch('../alphabets.json');
     alphabets = await response.json();
 });
 
@@ -30,9 +30,9 @@ describe('Alphabet Data', () => {
     it('should have correct DIN 5009 alphabet', () => {
         const din = alphabets.de.alphabet;
         expect(din['A']).toBe('Aachen');
-        expect(din['B']).toBe('Bremen');
+        expect(din['B']).toBe('Berlin');
         expect(din['Ä']).toBe('Umlaut Aachen');
-        expect(din['Z']).toBe('Zerbst');
+        expect(din['Z']).toBe('Zwickau');
     });
 
     it('should have 26 letters in English alphabet', () => {
@@ -84,7 +84,7 @@ describe('Text Spelling Logic', () => {
 
     it('should spell word in German', () => {
         const result = spellText('ABC', 'de');
-        expect(result).toBe('Aachen - Bremen - Chemnitz');
+        expect(result).toBe('Aachen - Berlin - Chemnitz');
     });
 
     it('should handle spaces', () => {
@@ -99,7 +99,7 @@ describe('Text Spelling Logic', () => {
 
     it('should handle German umlauts', () => {
         const result = spellText('ÄÖÜ', 'de');
-        expect(result).toBe('Umlaut Aachen - Umlaut Oldenburg - Umlaut Unna');
+        expect(result).toBe('Umlaut Aachen - Umlaut Offenbach - Umlaut Unna');
     });
 
     it('should handle unknown characters', () => {
@@ -176,7 +176,7 @@ describe('Answer Matching', () => {
 
     it('should handle German words', () => {
         expect(checkAnswer('aachen', 'Aachen')).toBe(true);
-        expect(checkAnswer('BREMEN', 'Bremen')).toBe(true);
+        expect(checkAnswer('BERLIN', 'Berlin')).toBe(true);
     });
 
     it('should handle partial matches', () => {

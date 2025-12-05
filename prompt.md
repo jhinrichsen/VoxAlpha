@@ -86,7 +86,7 @@ Create a fully offline, installable web application named **VoxAlpha** that enab
 - `style.css`
 - `manifest.json` with dark/light icon declarations
 - `service-worker.js`
-- `data/alphabets.json`
+- `alphabets.json`
 - `lib/whisper-wrapper.js`
 - `lib/tts-wrapper.js`
 - `storage.js`

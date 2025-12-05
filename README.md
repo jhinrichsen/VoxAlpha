@@ -7,7 +7,7 @@ VoxAlpha is a fully offline Progressive Web App that helps you learn and practic
 ## Features
 
 - **Two Spelling Alphabets**
-  - German: DIN 5009:2022 (Aachen, Bremen, Chemnitz...)
+  - German: DIN 5009:2022 (Aachen, Berlin, Chemnitz...)
   - English: NATO/ICAO (Alpha, Bravo, Charlie...)
 
 - **Two Training Modes**

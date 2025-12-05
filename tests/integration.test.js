@@ -207,7 +207,7 @@ describe('Service Worker', () => {
 
 describe('App Initialization', () => {
     it('should load alphabet data', async () => {
-        const response = await fetch('../data/alphabets.json');
+        const response = await fetch('../alphabets.json');
         const alphabets = await response.json();
 
         expect(alphabets).toBeDefined();
