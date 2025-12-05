@@ -17,7 +17,7 @@ import (
 // Version is set via ldflags during build
 var version = "dev"
 
-//go:embed dist
+//go:embed dist/pwa
 var content embed.FS
 
 func main() {
@@ -39,7 +39,7 @@ func main() {
 	}
 
 	// Create filesystem with proper MIME types
-	distFS, err := fs.Sub(content, "dist")
+	distFS, err := fs.Sub(content, "dist/pwa")
 	if err != nil {
 		log.Fatal(err)
 	}

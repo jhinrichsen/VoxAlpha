@@ -24,21 +24,30 @@ func TestMemoryLeak(t *testing.T) {
 	defer server.Close()
 
 	// Setup Chrome context
+	// IMPORTANT: Use fresh user-data-dir to prevent Service Worker cache issues.
+	// Service Worker persists across test runs in the same profile, causing tests
+	// to serve stale cached versions instead of latest dist/pwa/ build.
+	// Fresh profile ensures deterministic test environment.
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("no-sandbox", true),
 		chromedp.Flag("js-flags", "--expose-gc"), // Enable manual GC
+		chromedp.Flag("user-data-dir", t.TempDir()), // Fresh profile per test
 	)
-	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
-	defer cancel()
+	allocCtx, cancelAlloc := chromedp.NewExecAllocator(context.Background(), opts...)
+	defer cancelAlloc()
 
-	ctx, cancel := chromedp.NewContext(allocCtx)
-	defer cancel()
+	ctx, cancelCtx := chromedp.NewContext(allocCtx)
+	defer func() {
+		// Explicitly shutdown Chrome and wait for cleanup
+		cancelCtx()
+		time.Sleep(500 * time.Millisecond) // Give Chrome time to release file handles
+	}()
 
 	// Set timeout
-	ctx, cancel = context.WithTimeout(ctx, 60*time.Second)
-	defer cancel()
+	ctx, cancelTimeout := context.WithTimeout(ctx, 30*time.Second)
+	defer cancelTimeout()
 
 	// Navigate to app
 	url := fmt.Sprintf("http://localhost:%s/voxalpha.html", testPort)
@@ -51,15 +60,22 @@ func TestMemoryLeak(t *testing.T) {
 	// Wait for app to initialize
 	time.Sleep(2 * time.Second)
 
-	// Get baseline memory
+	// Force GC to clear initialization overhead before baseline
+	if err := forceGC(ctx); err != nil {
+		t.Logf("Warning: Failed to force initial GC: %v", err)
+	}
+	time.Sleep(500 * time.Millisecond)
+
+	// Get baseline memory (after initial GC)
 	baseline, err := getMemoryUsage(ctx)
 	if err != nil {
 		t.Fatalf("Failed to get baseline memory: %v", err)
 	}
-	t.Logf("Baseline memory: %.2f MB", float64(baseline)/1024/1024)
+	t.Logf("Baseline memory: %.2f MB (after initial GC)", float64(baseline)/1024/1024)
 
 	// Simulate recordings
 	t.Logf("Simulating %d recordings...", numRecordings)
+	previousMem := baseline
 	for i := 0; i < numRecordings; i++ {
 		if err := simulateRecording(ctx); err != nil {
 			t.Fatalf("Recording %d failed: %v", i+1, err)
@@ -70,6 +86,11 @@ func TestMemoryLeak(t *testing.T) {
 			t.Fatalf("Recording %d cleanup timeout: %v", i+1, err)
 		}
 
+		// Force GC periodically to avoid accumulation (not a leak, just garbage)
+		if err := forceGC(ctx); err != nil {
+			t.Logf("Warning: Failed to force GC after recording %d: %v", i+1, err)
+		}
+
 		// Check memory every 5 recordings
 		if (i+1)%5 == 0 {
 			mem, err := getMemoryUsage(ctx)
@@ -77,16 +98,21 @@ func TestMemoryLeak(t *testing.T) {
 				t.Logf("Warning: Failed to get memory at recording %d", i+1)
 				continue
 			}
-			growthMB := float64(mem-baseline) / 1024 / 1024
-			t.Logf("Recording %d: %.2f MB (growth: %.2f MB)", i+1, float64(mem)/1024/1024, growthMB)
+			deltaFromPrevious := float64(mem-previousMem) / 1024 / 1024
+			deltaFromBaseline := float64(mem-baseline) / 1024 / 1024
+			t.Logf("Recording %2d: %.2f MB (Δ prev: %+.2f MB, Δ baseline: %+.2f MB)",
+				i+1, float64(mem)/1024/1024, deltaFromPrevious, deltaFromBaseline)
+			previousMem = mem
 		}
 	}
 
-	// Force garbage collection
-	if err := forceGC(ctx); err != nil {
-		t.Logf("Warning: Failed to force GC: %v", err)
+	// Force garbage collection multiple times (V8 uses generational GC)
+	for i := 0; i < 3; i++ {
+		if err := forceGC(ctx); err != nil {
+			t.Logf("Warning: Failed to force GC (pass %d): %v", i+1, err)
+		}
+		time.Sleep(500 * time.Millisecond)
 	}
-	time.Sleep(1 * time.Second)
 
 	// Get final memory
 	final, err := getMemoryUsage(ctx)
@@ -94,19 +120,19 @@ func TestMemoryLeak(t *testing.T) {
 		t.Fatalf("Failed to get final memory: %v", err)
 	}
 
-	// Calculate growth
-	growthBytes := final - baseline
-	growthMB := float64(growthBytes) / 1024 / 1024
+	// Calculate net growth
+	netGrowthBytes := final - baseline
+	netGrowthMB := float64(netGrowthBytes) / 1024 / 1024
 
 	t.Logf("\n=== Memory Analysis ===")
 	t.Logf("Baseline: %.2f MB", float64(baseline)/1024/1024)
 	t.Logf("Final:    %.2f MB", float64(final)/1024/1024)
-	t.Logf("Growth:   %.2f MB", growthMB)
-	t.Logf("Limit:    %.2f MB", float64(maxMemoryGrowthMB))
+	t.Logf("Net growth: %.2f MB", netGrowthMB)
+	t.Logf("Limit:      %.2f MB", float64(maxMemoryGrowthMB))
 
 	// Assert
-	if growthMB > maxMemoryGrowthMB {
-		t.Errorf("MEMORY LEAK DETECTED: Memory grew by %.2f MB (limit: %d MB)", growthMB, maxMemoryGrowthMB)
+	if netGrowthMB > maxMemoryGrowthMB {
+		t.Errorf("MEMORY LEAK DETECTED: Memory grew by %.2f MB (limit: %d MB)", netGrowthMB, maxMemoryGrowthMB)
 		t.Error("Check blob URL cleanup and audioData references")
 	} else {
 		t.Logf("✓ OK: Memory growth within acceptable limits")
@@ -133,8 +159,8 @@ func simulateRecording(ctx context.Context) error {
 
 			// Simulate WAV conversion (like whisper-wrapper does)
 			const wavSize = 44 + samples * 2;
-			const buffer = new ArrayBuffer(wavSize);
-			const view = new DataView(buffer);
+			let buffer = new ArrayBuffer(wavSize);
+			let view = new DataView(buffer);
 
 			// Write WAV header
 			const writeString = (offset, string) => {
@@ -164,11 +190,11 @@ func simulateRecording(ctx context.Context) error {
 			}
 
 			// Create blob and URL (this is what we're testing for leaks)
-			const blob = new Blob([buffer], { type: 'audio/wav' });
-			const url = URL.createObjectURL(blob);
+			let blob = new Blob([buffer], { type: 'audio/wav' });
+			let url = URL.createObjectURL(blob);
 
 			// Simulate download link
-			const a = document.createElement('a');
+			let a = document.createElement('a');
 			a.href = url;
 			a.download = 'test.wav';
 
@@ -179,8 +205,13 @@ func simulateRecording(ctx context.Context) error {
 			// For this test, we manually clean up to test the pattern
 			setTimeout(() => {
 				URL.revokeObjectURL(url);
-				// Explicitly null audioData (our fix)
+				// Explicitly clear all references for GC (our fix)
 				audioData = null;
+				buffer = null;
+				view = null;
+				blob = null;
+				url = null;
+				a = null;
 				// Signal cleanup complete
 				window.__recordingCleanupDone = true;
 			}, 100);
@@ -246,8 +277,8 @@ func startTestServer(t *testing.T) *http.Server {
 
 	mux := http.NewServeMux()
 
-	// Serve dist directory
-	fs := http.FileServer(http.Dir("../dist"))
+	// Serve dist/pwa directory (PWA build output)
+	fs := http.FileServer(http.Dir("../dist/pwa"))
 	mux.Handle("/", addCOOPHeaders(fs))
 
 	server := &http.Server{

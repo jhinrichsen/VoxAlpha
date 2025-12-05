@@ -1,6 +1,6 @@
-# Whisper model files (downloaded models in dist/)
-dist/*.bin
-dist/*.gguf
+# Generated build output directory
+# Contains: dist/pwa/ (PWA build), dist/{GOOS}/{GOARCH}/ (Go binaries), models (*.bin)
+dist/
 
 # Whisper-cpp directory
 whisper-cpp/
@@ -12,7 +12,6 @@ whisper-cpp/
 *.ogg
 
 # Build artifacts
-voxalpha
 release
 screenshot
 tools/screenshot/screenshot

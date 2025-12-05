@@ -240,8 +240,8 @@ class WhisperSTT {
             console.log(`[Whisper] Audio stats: min=${Math.min(...audioData).toFixed(3)}, max=${Math.max(...audioData).toFixed(3)}`);
 
             // Save audio to downloadable WAV for debugging
-            const wavBlob = this.audioDataToWav(audioData, 16000);
-            const url = URL.createObjectURL(wavBlob);
+            let wavBlob = this.audioDataToWav(audioData, 16000);
+            let url = URL.createObjectURL(wavBlob);
 
             // Auto-download the WAV file if ?download=1 or ?debug=1 query parameter is set
             const urlParams = new URLSearchParams(window.location.search);
@@ -251,7 +251,7 @@ class WhisperSTT {
                 const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
                 const filename = `voxalpha-recording-${timestamp}.wav`;
 
-                const a = document.createElement('a');
+                let a = document.createElement('a');
                 a.href = url;
                 a.download = filename;
                 a.style.display = 'none';
@@ -262,12 +262,21 @@ class WhisperSTT {
                 console.log(`[Whisper] Auto-downloading captured audio as: ${filename}`);
                 console.log('[Whisper] File should appear in your Downloads folder');
 
-                // Clean up blob URL immediately after download trigger
-                setTimeout(() => URL.revokeObjectURL(url), 100);
+                // Clean up blob URL and references to prevent memory leak
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                    wavBlob = null;
+                    url = null;
+                    a = null;
+                }, 100);
             } else {
                 console.log(`[Whisper] Auto-download disabled. Blob URL created for debugging`);
-                // Clean up blob URL after short delay (to allow console inspection)
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                // Clean up blob URL and references after short delay
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                    wavBlob = null;
+                    url = null;
+                }, 1000);
             }
 
             // Check if audio is completely silent before attempting transcription
