@@ -1,11 +1,16 @@
 = VoxAlpha
 :toc:
 :toc-placement!:
+:icons: font
+
+image:favicon.svg[VoxAlpha Logo,120,120,align="center"]
 
 image:https://img.shields.io/github/license/jhinrichsen/VoxAlpha[License,link=LICENSE]
 image:https://img.shields.io/github/v/tag/jhinrichsen/VoxAlpha[GitHub tag]
+image:https://img.shields.io/github/last-commit/jhinrichsen/VoxAlpha[Last Commit]
 image:https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go[Go Version]
 image:https://img.shields.io/badge/PWA-ready-5A0FC8?logo=pwa[PWA Ready]
+image:https://img.shields.io/badge/Offline-100%25-green[Offline Ready]
 
 toc::[]
 
@@ -43,15 +48,17 @@ VoxAlpha is a fully offline Progressive Web App that helps you learn and practic
 git clone https://github.com/jhinrichsen/VoxAlpha.git
 cd VoxAlpha
 
-# Download Whisper model (required, 253MB)
+# Download model to cache (253MB, only needed once)
 make download-model
 
-# Build and run
+# Build (embeds model into binary) and run
 make build
-./voxalpha
+./dist/voxalpha
 ----
 
 Open http://localhost:8081 in your browser.
+
+NOTE: The 265MB binary includes everything - no external files needed.
 
 Grant microphone access when prompted (required for Listen & Speak mode).
 
@@ -65,11 +72,12 @@ go run .
 
 === Model Selection
 
-By default, the tiny model is embedded. For better accuracy, use the small model:
+The small Whisper model (253MB) is embedded in the binary for single-file deployment.
+To override with a different model:
 
 [source,bash]
 ----
-./voxalpha --model dist/ggml-small-q8_0.bin
+./dist/voxalpha --model /path/to/other-model.bin
 ----
 
 See link:MODEL_COMPARISON.md[MODEL_COMPARISON.md] for model details.
@@ -80,17 +88,15 @@ See link:MODEL_COMPARISON.md[MODEL_COMPARISON.md] for model details.
 
 [source,bash]
 ----
-# Download model
+# Download model to cache and build
 make download-model
-
-# Build binary
 make build
 
-# Deploy voxalpha binary
-# Model must be available via --model flag or in dist/
+# Deploy single binary (265MB, includes everything)
+scp dist/voxalpha server:/path/to/
 ----
 
-The `voxalpha` binary embeds all web assets from `dist/`.
+The `voxalpha` binary embeds all web assets and the Whisper model - single-file deployment.
 
 === Cloudflare Pages
 
