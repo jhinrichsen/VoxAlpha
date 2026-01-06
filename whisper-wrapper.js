@@ -358,9 +358,9 @@ class WhisperSTT {
 
                 try {
                     console.log('[Whisper] Calling Module.full_default...');
-                    // Use all available CPU cores for faster transcription
-                    const numThreads = navigator.hardwareConcurrency || 4;
-                    console.log(`[Whisper] Using ${numThreads} threads`);
+                    // Use max threads for faster transcription (capped at 8 for WASM stability)
+                    const numThreads = Math.min(navigator.hardwareConcurrency || 8, 8);
+                    console.log(`[Whisper] Using ${numThreads} threads (hardwareConcurrency: ${navigator.hardwareConcurrency})`);
                     
                     // Call is synchronous and prints happen during execution
                     const returnCode = Module.full_default(
