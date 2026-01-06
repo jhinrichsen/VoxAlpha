@@ -1,0 +1,372 @@
+= VoxAlpha
+:toc:
+:toc-placement!:
+
+image:https://img.shields.io/github/license/jhinrichsen/VoxAlpha[License,link=LICENSE]
+image:https://img.shields.io/github/v/tag/jhinrichsen/VoxAlpha[GitHub tag]
+image:https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go[Go Version]
+image:https://img.shields.io/badge/PWA-ready-5A0FC8?logo=pwa[PWA Ready]
+
+toc::[]
+
+*Offline Speech Spelling Trainer* for DIN 5009 (German) and NATO/ICAO (English) alphabets.
+
+VoxAlpha is a fully offline Progressive Web App that helps you learn and practice spelling alphabets using speech recognition and text-to-speech. All processing happens in your browser.
+
+== Features
+
+* *Two Spelling Alphabets*
+** German: DIN 5009:2022 (Aachen, Berlin, Chemnitz...)
+** English: NATO/ICAO (Alpha, Bravo, Charlie...)
+
+* *Two Training Modes*
+** *Type & Listen*: Type letters to hear their spelling alphabet
+** *Listen & Speak*: Speak the code word for displayed letters
+
+* *Fully Offline*
+** Speech-to-text via whisper.cpp (WASM)
+** All data cached locally
+** Works without internet after first visit
+
+* *Progressive Web App*
+** Installable to home screen
+** Dark/light theme
+** Responsive design
+
+== Quick Start
+
+=== Running Locally
+
+[source,bash]
+----
+# Clone and enter directory
+git clone https://github.com/jhinrichsen/VoxAlpha.git
+cd VoxAlpha
+
+# Download Whisper model (required, 253MB)
+make download-model
+
+# Build and run
+make build
+./voxalpha
+----
+
+Open http://localhost:8081 in your browser.
+
+Grant microphone access when prompted (required for Listen & Speak mode).
+
+=== Using Go Run
+
+[source,bash]
+----
+make download-model
+go run .
+----
+
+=== Model Selection
+
+By default, the tiny model is embedded. For better accuracy, use the small model:
+
+[source,bash]
+----
+./voxalpha --model dist/ggml-small-q8_0.bin
+----
+
+See link:MODEL_COMPARISON.md[MODEL_COMPARISON.md] for model details.
+
+== Deployment
+
+=== Self-hosted (Go Binary)
+
+[source,bash]
+----
+# Download model
+make download-model
+
+# Build binary
+make build
+
+# Deploy voxalpha binary
+# Model must be available via --model flag or in dist/
+----
+
+The `voxalpha` binary embeds all web assets from `dist/`.
+
+=== Cloudflare Pages
+
+*Not supported:* Cloudflare Pages has a 25MB file size limit per file. The Whisper model (253MB) exceeds this limit, making Cloudflare Pages unsuitable for this application.
+
+Alternative hosting options:
+
+* Self-hosted with Go binary (recommended)
+* Cloudflare Workers with R2 storage (requires CORS configuration)
+* Traditional web hosting with sufficient file size limits
+
+== Versioning
+
+Versioning is completely driven by git tags. No manual file editing, no version numbers in package.json or pom.xml.
+
+* Git tags follow semantic versioning with leading `v`: `v1.6.0`
+* Versions used in code have no leading `v`: `1.6.0`
+
+Creating a tag in git forges (GitHub, GitLab, etc.) automatically creates releases without editing any files.
+
+Create a new version:
+[source,bash]
+----
+git tag v1.6.0
+make deploy
+----
+
+Version changes trigger PWA cache updates on user devices. The service worker detects the new version and downloads updated assets. The Whisper model (253MB) is cached separately in IndexedDB and persists across version updates, so users don't re-download it.
+
+== Technology
+
+* Plain HTML/CSS/JavaScript (no frameworks)
+* Go web server with embedded assets
+* IndexedDB for local storage
+* Service Worker for offline capability
+* whisper.cpp (WASM) for speech recognition
+* PWA installable on all platforms
+
+== TTS Alternatives 2026
+
+Analysis of offline Text-to-Speech engines for VoxAlpha.
+
+=== Requirements
+
+* Fully offline / air-gapped operation (no cloud APIs)
+* German language support (DIN 5009:2022 city names)
+* English language support (NATO alphabet)
+* Browser-compatible (WebAssembly)
+* Natural-sounding voices
+
+=== Candidates Evaluated
+
+[cols="1,1,1,1,1"]
+|===
+|Engine |Type |German |English |Status
+
+|espeak-ng
+|Formant synthesis
+|Yes
+|Yes
+|*Rejected* - robotic voice
+
+|Piper
+|Neural (VITS)
+|Yes
+|Yes
+|*Selected*
+
+|Sherpa-ONNX
+|Neural (VITS)
+|No
+|Yes
+|*Rejected* - no German
+
+|Supertonic
+|Neural
+|No
+|Yes
+|*Rejected* - no German
+|===
+
+=== Detailed Analysis
+
+==== espeak-ng
+
+* *Website:* https://github.com/espeak-ng/espeak-ng
+* *Technology:* Formant synthesis (rule-based)
+* *Size:* ~3 MB total
+* *Languages:* 100+ including German and English
+* *Voice quality:* Robotic, reminiscent of 1980s speech synthesizers
+* *WASM support:* Yes (via Emscripten)
+
+*Verdict:* Rejected due to unacceptable voice quality.
+
+==== Piper
+
+* *Website:* https://github.com/rhasspy/piper
+* *Technology:* Neural network (VITS)
+* *Size:* ~60 MB per voice model
+* *Languages:* 30+ with varying quality
+* *Voice quality:* Natural, human-like
+* *WASM support:* Yes (via @mintplex-labs/piper-tts-web or Sherpa-ONNX runtime)
+
+===== Available German Voices
+
+[cols="1,1,1"]
+|===
+|Voice |Gender |Quality
+
+|thorsten
+|Male
+|low, medium, *high*
+
+|thorsten_emotional
+|Male
+|medium
+
+|eva_k
+|Female
+|x_low
+
+|kerstin
+|Female
+|low
+
+|ramona
+|Female
+|low
+|===
+
+NOTE: Only `thorsten` has acceptable quality. Female German voices are too low quality for production use.
+
+===== Available English Voices
+
+[cols="1,1,1"]
+|===
+|Voice |Gender |Quality
+
+|amy
+|Female
+|medium
+
+|lessac
+|Male
+|medium
+
+|libritts_r
+|Multi-speaker
+|medium
+|===
+
+*Verdict:* Selected. Best balance of quality, language support, and offline capability.
+
+==== Sherpa-ONNX
+
+* *Website:* https://github.com/k2-fsa/sherpa-onnx
+* *Technology:* Neural network (VITS via ONNX Runtime)
+* *Size:* ~60 MB per voice model
+* *Languages:* 40+ (uses Piper voice models)
+* *Voice quality:* Identical to Piper (same models)
+* *WASM support:* Yes
+* *Additional features:* STT, VAD, speaker diarization
+
+*Verdict:* Rejected. While technically excellent and actively maintained, no German voice models are currently available in the distribution.
+
+==== Supertonic
+
+* *Website:* https://github.com/supertone-inc/supertonic
+* *Technology:* Neural network (custom architecture)
+* *Size:* ~250 MB (all voices included)
+* *Languages:* English only
+* *Voice quality:* Excellent, very natural
+* *WASM support:* Yes (WebGPU + WASM fallback)
+* *Voices:* 10 included (5 female F1-F5, 5 male M1-M5)
+* *Speed:* Up to 167x real-time on M4 Pro
+
+*Verdict:* Rejected. Despite having the best English voice quality, German is not supported.
+
+=== Selected Solution
+
+*Piper TTS* with the following voices:
+
+[cols="1,1,1"]
+|===
+|Language |Voice |Model File
+
+|German (DIN 5009)
+|Thorsten
+|`de_DE-thorsten-medium.onnx`
+
+|English (NATO)
+|Amy
+|`en_US-amy-medium.onnx`
+|===
+
+=== Piper Version Choice
+
+VoxAlpha uses the *original Piper binary release* (2023.11.14-2) from https://github.com/rhasspy/piper[rhasspy/piper], not the newer https://github.com/OHF-Voice/piper1-gpl[piper1-gpl].
+
+==== Why the original release?
+
+[cols="1,1,1"]
+|===
+|Aspect |Original (rhasspy/piper) |New (piper1-gpl)
+
+|License
+|MIT
+|GPL-3.0
+
+|Install
+|Binary tarball
+|`pip install piper-tts`
+
+|Status
+|Archived (Oct 2025)
+|Active
+
+|Latest
+|2023.11.14-2
+|v1.3.0 (Jul 2025)
+|===
+
+*Reasons for using the original:*
+
+1. *Standalone binary* - no Python runtime dependency, simpler Makefile integration
+2. *Stability* - the 2023 release works reliably; neural TTS doesn't need frequent updates
+3. *Compatibility* - the pip package has onnxruntime conflicts with Python 3.14+
+4. *Same voice models* - both versions use identical `.onnx` models from Hugging Face
+
+==== Python alternative
+
+If you prefer Python integration or need the latest fixes:
+
+[source,bash]
+----
+pip install piper-tts
+----
+
+The pip package (`piper-tts`) provides a cleaner API for Python projects and embeds espeak-ng directly. Note: requires Python < 3.14 due to onnxruntime compatibility.
+
+=== Model Sizes
+
+[cols="1,1"]
+|===
+|Component |Size
+
+|Piper runtime (WASM)
+|~5 MB
+
+|German voice (thorsten-medium)
+|61 MB
+
+|English voice (amy-medium)
+|61 MB
+
+|espeak-ng-data (phonemizer)
+|~15 MB
+
+|*Total*
+|*~142 MB*
+|===
+
+=== Known Limitations
+
+1. *German female voice:* No high-quality German female voice available. Thorsten (male) is the only production-ready German voice.
+
+2. *Model download:* Voice models must be downloaded on first use and cached in IndexedDB for offline operation.
+
+== License
+
+GPL-3.0 - see link:LICENSE[LICENSE] and link:THIRD-PARTY-LICENSES.md[THIRD-PARTY-LICENSES.md]
+
+== Links
+
+* https://www.din.de/en/getting-involved/standards-committees/nia/din-5009-2022-11[DIN 5009:2022]
+* https://en.wikipedia.org/wiki/NATO_phonetic_alphabet[NATO Phonetic Alphabet]
+* https://github.com/ggerganov/whisper.cpp[whisper.cpp]
+* https://github.com/rhasspy/piper[Piper TTS]
+* https://huggingface.co/rhasspy/piper-voices[Piper Voices on Hugging Face]

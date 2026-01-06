@@ -52,7 +52,7 @@
         "Privacy-focused (no tracking)",
         "Progressive Web App (installable)"
       ],
-      "browserRequirements": "Requires modern web browser. Speech-to-text (STT) runs fully offline via Whisper WASM. Text-to-speech (TTS) currently uses Web Speech API."
+      "browserRequirements": "Requires modern web browser. Fully offline: STT via Whisper WASM, TTS via pre-generated Piper audio."
     }
     </script>
 
@@ -100,8 +100,24 @@
         }
 
         header {
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3rem;
             margin-bottom: 3rem;
+        }
+
+        .header-logo {
+            flex-shrink: 0;
+        }
+
+        .header-logo img {
+            width: 160px;
+            height: 160px;
+        }
+
+        .header-content {
+            text-align: center;
         }
 
         h1 {
@@ -261,6 +277,16 @@
         }
 
         @media (max-width: 600px) {
+            header {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .header-logo img {
+                width: 100px;
+                height: 100px;
+            }
+
             h1 {
                 font-size: 2rem;
             }
@@ -278,16 +304,21 @@
 <body>
     <div class="container">
         <header>
-            <h1>VoxAlpha</h1>
-            <p class="tagline">Master the Phonetic Alphabet with Speech Recognition</p>
+            <div class="header-content">
+                <h1>VoxAlpha</h1>
+                <p class="tagline">Master the Phonetic Alphabet with Speech Recognition</p>
 
-            <div class="lang-selector">
-                <button class="lang-btn active" data-lang="en">English</button>
-                <button class="lang-btn" data-lang="de">Deutsch</button>
-                <button class="lang-btn" data-lang="zh">中文</button>
+                <div class="lang-selector">
+                    <button class="lang-btn active" data-lang="en">English</button>
+                    <button class="lang-btn" data-lang="de">Deutsch</button>
+                    <button class="lang-btn" data-lang="zh">中文</button>
+                </div>
+
+                <a href="./voxalpha.html" class="cta-button">Launch App</a>
             </div>
-
-            <a href="./voxalpha.html" class="cta-button">Launch App</a>
+            <div class="header-logo">
+                <img src="favicon.svg" alt="VoxAlpha logo">
+            </div>
         </header>
 
         <!-- English Content -->
@@ -302,7 +333,7 @@
                 <div class="features">
                     <div class="feature">
                         <h3>🗣️ Offline Speech Recognition</h3>
-                        <p>Practice speaking the code words and get instant feedback with fully offline speech-to-text powered by Whisper WASM. Text-to-speech currently uses browser API.</p>
+                        <p>Practice speaking the code words and get instant feedback. Fully offline: speech recognition via Whisper WASM, text-to-speech via Piper.</p>
                     </div>
                     <div class="feature">
                         <h3>🌍 Multiple Alphabets</h3>
@@ -365,7 +396,7 @@
                 <div class="features">
                     <div class="feature">
                         <h3>🗣️ Offline-Spracherkennung</h3>
-                        <p>Üben Sie das Sprechen der Codewörter und erhalten Sie sofortiges Feedback durch vollständig offline Spracherkennung mit Whisper WASM. Sprachausgabe nutzt aktuell noch Browser-API.</p>
+                        <p>Üben Sie das Sprechen der Codewörter und erhalten Sie sofortiges Feedback. Vollständig offline: Spracherkennung via Whisper WASM, Sprachausgabe via Piper.</p>
                     </div>
                     <div class="feature">
                         <h3>🌍 Mehrere Alphabete</h3>
@@ -428,7 +459,7 @@
                 <div class="features">
                     <div class="feature">
                         <h3>🗣️ 离线语音识别</h3>
-                        <p>练习说出代码词，通过 Whisper WASM 完全离线语音转文字获得即时反馈。文字转语音目前使用浏览器API。</p>
+                        <p>练习说出代码词并获得即时反馈。完全离线：语音识别通过 Whisper WASM，语音合成通过 Piper。</p>
                     </div>
                     <div class="feature">
                         <h3>🌍 多种字母表</h3>
@@ -481,7 +512,7 @@
 
         <footer>
             <p>VoxAlpha is open source and privacy-focused. No tracking, no ads, no data collection.</p>
-            <p style="margin-top: 0.5rem; opacity: 0.7;">Built with Whisper.cpp (offline STT) and Web Speech API (TTS)</p>
+            <p style="margin-top: 0.5rem; opacity: 0.7;">Built with Whisper.cpp (offline STT) and Piper (offline TTS)</p>
         </footer>
     </div>
 

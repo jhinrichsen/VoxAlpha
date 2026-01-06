@@ -20,6 +20,9 @@ var version = "dev"
 //go:embed dist/pwa
 var content embed.FS
 
+//go:embed dist/ggml-small-q8_0.bin
+var modelData []byte
+
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "VoxAlpha %s - Offline Speech Spelling Trainer\n\nUsage:\n", version)
@@ -30,7 +33,7 @@ func main() {
 	server := flag.String("server", "localhost", "HTTP server host")
 	port := flag.String("port", "8081", "HTTP server port")
 	browse := flag.Bool("browse", true, "Open browser window automatically")
-	model := flag.String("model", "", "Path to external Whisper model file (default: embedded tiny model)")
+	model := flag.String("model", "", "Path to external Whisper model file (overrides embedded model)")
 	flag.Parse()
 
 	if showVersion {
@@ -45,14 +48,21 @@ func main() {
 	}
 	fsys := http.FS(distFS)
 
-	// Serve external model if provided
-	if *model != "" {
-		http.HandleFunc("/external-model.bin", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
-			w.Header().Set("Cross-Origin-Embedder-Policy", "require-corp")
+	// Serve Whisper model (embedded or external override)
+	http.HandleFunc("/ggml-small-q8_0.bin", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
+		w.Header().Set("Cross-Origin-Embedder-Policy", "require-corp")
+		w.Header().Set("Content-Type", "application/octet-stream")
+
+		if *model != "" {
+			// Serve external model if specified
 			http.ServeFile(w, r, *model)
-		})
-	}
+		} else {
+			// Serve embedded model
+			w.Header().Set("Content-Length", fmt.Sprintf("%d", len(modelData)))
+			w.Write(modelData)
+		}
+	})
 
 	// Serve config endpoint
 	http.HandleFunc("/api/config", func(w http.ResponseWriter, r *http.Request) {
@@ -60,9 +70,10 @@ func main() {
 		w.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
 		w.Header().Set("Cross-Origin-Embedder-Policy", "require-corp")
 
-		config := map[string]interface{}{}
+		config := map[string]interface{}{
+			"modelUrl": "/ggml-small-q8_0.bin",
+		}
 		if *model != "" {
-			config["modelUrl"] = "/external-model.bin"
 			config["modelPath"] = *model
 		}
 

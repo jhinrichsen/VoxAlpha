@@ -1,42 +1,30 @@
 /**
- * eSpeak-ng WASM wrapper for offline text-to-speech
- * This is a placeholder implementation that will need to be integrated
- * with the actual espeak-ng WASM build
+ * Piper TTS wrapper - plays pre-generated WAV snippets
+ * Fully offline - no Web Speech API, no network requests
  */
 
-class ESpeakTTS {
+class PiperTTS {
     constructor() {
         this.initialized = false;
         this.language = 'en';
-        this.wasmModule = null;
         this.audioContext = null;
+        this.audioCache = new Map();
     }
 
     /**
-     * Initialize eSpeak TTS
+     * Initialize TTS
      * @param {string} language - Language code ('en' or 'de')
      */
     async init(language = 'en') {
         this.language = language;
 
         try {
-            console.log(`[eSpeak] Initializing TTS for language: ${language}`);
-
-            // Don't create AudioContext yet - wait for user interaction
-            // It will be created on first speak() call
-
-            // TODO: Load espeak-ng WASM module
-            // For now, this is a placeholder that simulates loading
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            // TODO: Load voice data and phoneme rules for the selected language
-            // The data should be loaded from IndexedDB cache or fetched if not cached
-
+            console.log(`[PiperTTS] Initializing for language: ${language}`);
             this.initialized = true;
-            console.log('[eSpeak] TTS initialized successfully');
+            console.log('[PiperTTS] Initialized successfully');
             return true;
         } catch (error) {
-            console.error('[eSpeak] Failed to initialize TTS:', error);
+            console.error('[PiperTTS] Failed to initialize:', error);
             throw error;
         }
     }
@@ -49,71 +37,119 @@ class ESpeakTTS {
     }
 
     /**
-     * Speak text using TTS
-     * @param {string} text - Text to speak
-     * @param {Object} options - TTS options (rate, pitch, volume)
-     * @returns {Promise<void>}
+     * Get the WAV file path for a word
+     * @param {string} word - The word to speak
+     * @returns {string} Path to the WAV file
      */
-    async speak(text, options = {}) {
-        if (!this.initialized) {
-            throw new Error('eSpeak TTS not initialized');
+    _getAudioPath(word) {
+        const langDir = this.language === 'de' ? 'de' : 'en';
+
+        // Map word to letter code
+        // German DIN 5009 mappings
+        const deWordToLetter = {
+            'aachen': 'A', 'berlin': 'B', 'chemnitz': 'C', 'düsseldorf': 'D',
+            'essen': 'E', 'frankfurt': 'F', 'goslar': 'G', 'hamburg': 'H',
+            'ingelheim': 'I', 'jena': 'J', 'köln': 'K', 'leipzig': 'L',
+            'münchen': 'M', 'nürnberg': 'N', 'offenbach': 'O', 'potsdam': 'P',
+            'quickborn': 'Q', 'rostock': 'R', 'salzwedel': 'S', 'tübingen': 'T',
+            'unna': 'U', 'völklingen': 'V', 'wuppertal': 'W', 'xanten': 'X',
+            'ypsilon': 'Y', 'zwickau': 'Z',
+            'umlaut-aachen': 'AE', 'umlaut-offenbach': 'OE', 'umlaut-unna': 'UE',
+            'umlaut aachen': 'AE', 'umlaut offenbach': 'OE', 'umlaut unna': 'UE',
+            'eszett': 'SZ'
+        };
+
+        // NATO alphabet mappings
+        const enWordToLetter = {
+            'alpha': 'A', 'bravo': 'B', 'charlie': 'C', 'delta': 'D',
+            'echo': 'E', 'foxtrot': 'F', 'golf': 'G', 'hotel': 'H',
+            'india': 'I', 'juliet': 'J', 'kilo': 'K', 'lima': 'L',
+            'mike': 'M', 'november': 'N', 'oscar': 'O', 'papa': 'P',
+            'quebec': 'Q', 'romeo': 'R', 'sierra': 'S', 'tango': 'T',
+            'uniform': 'U', 'victor': 'V', 'whiskey': 'W', 'x-ray': 'X',
+            'yankee': 'Y', 'zulu': 'Z'
+        };
+
+        const wordLower = word.toLowerCase();
+        const mapping = this.language === 'de' ? deWordToLetter : enWordToLetter;
+        const letter = mapping[wordLower];
+
+        if (!letter) {
+            console.warn(`[PiperTTS] Unknown word: ${word}`);
+            return null;
+        }
+
+        return `./audio/${langDir}/${letter}.wav`;
+    }
+
+    /**
+     * Load and cache audio buffer
+     * @param {string} path - Path to WAV file
+     * @returns {Promise<AudioBuffer>}
+     */
+    async _loadAudio(path) {
+        // Check cache first
+        if (this.audioCache.has(path)) {
+            return this.audioCache.get(path);
         }
 
         // Create AudioContext on first use (after user gesture)
         if (!this.audioContext) {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log(`[eSpeak] AudioContext created (sample rate: ${this.audioContext.sampleRate}Hz)`);
+            console.log(`[PiperTTS] AudioContext created (sample rate: ${this.audioContext.sampleRate}Hz)`);
         }
 
-        const {
-            rate = 1.0,
-            pitch = 1.0,
-            volume = 1.0
-        } = options;
-
-        try {
-            console.log(`[eSpeak] Speaking: "${text}"`);
-
-            // TODO: Call espeak-ng WASM synthesis
-            // This should:
-            // 1. Convert text to phonemes using espeak-ng rules
-            // 2. Synthesize audio using the WASM module
-            // 3. Play the audio through Web Audio API
-
-            // For now, use a mock implementation
-            await this._mockSpeak(text, { rate, pitch, volume });
-
-            console.log('[eSpeak] Speech completed');
-        } catch (error) {
-            console.error('[eSpeak] Speech failed:', error);
-            throw error;
+        // Fetch and decode audio
+        const response = await fetch(path);
+        if (!response.ok) {
+            throw new Error(`Failed to load audio: ${path} (${response.status})`);
         }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+
+        // Cache for future use
+        this.audioCache.set(path, audioBuffer);
+        console.log(`[PiperTTS] Cached audio: ${path}`);
+
+        return audioBuffer;
     }
 
     /**
-     * Mock TTS for development/testing
-     * Uses Web Speech API as fallback until espeak-ng WASM is integrated
-     * @private
+     * Speak a word using pre-generated WAV snippet
+     * @param {string} word - Word to speak (e.g., "Alpha", "Berlin")
+     * @returns {Promise<void>}
      */
-    async _mockSpeak(text, options) {
-        // Check if Web Speech API is available (fallback for development)
-        if ('speechSynthesis' in window) {
-            return new Promise((resolve, reject) => {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = this.language === 'de' ? 'de-DE' : 'en-US';
-                utterance.rate = options.rate;
-                utterance.pitch = options.pitch;
-                utterance.volume = options.volume;
+    async speak(word) {
+        if (!this.initialized) {
+            throw new Error('PiperTTS not initialized');
+        }
 
-                utterance.onend = resolve;
-                utterance.onerror = reject;
+        const path = this._getAudioPath(word);
+        if (!path) {
+            console.error(`[PiperTTS] No audio file for word: ${word}`);
+            return;
+        }
 
-                window.speechSynthesis.speak(utterance);
+        try {
+            console.log(`[PiperTTS] Speaking: "${word}" (${path})`);
+
+            const audioBuffer = await this._loadAudio(path);
+
+            // Play the audio
+            await new Promise((resolve, reject) => {
+                const source = this.audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(this.audioContext.destination);
+                source.onended = resolve;
+                source.onerror = reject;
+                source.start(0);
             });
-        } else {
-            // If Web Speech API is not available, just simulate a delay
-            console.warn('[eSpeak] Web Speech API not available, using mock delay');
-            await new Promise(resolve => setTimeout(resolve, text.length * 50));
+
+            console.log('[PiperTTS] Speech completed');
+        } catch (error) {
+            console.error('[PiperTTS] Speech failed:', error);
+            throw error;
         }
     }
 
@@ -121,11 +157,9 @@ class ESpeakTTS {
      * Stop any ongoing speech
      */
     stop() {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-        }
-        // TODO: Stop espeak-ng WASM playback
-        console.log('[eSpeak] Speech stopped');
+        // Web Audio API doesn't have a global stop - individual sources are fire-and-forget
+        // For now, just log
+        console.log('[PiperTTS] Stop requested');
     }
 
     /**
@@ -135,22 +169,19 @@ class ESpeakTTS {
     async setLanguage(language) {
         if (this.language !== language) {
             this.language = language;
-            // TODO: Reload voice data for new language
-            console.log(`[eSpeak] Language changed to: ${language}`);
+            console.log(`[PiperTTS] Language changed to: ${language}`);
         }
     }
 
     /**
-     * Get available voices
+     * Get available voices (for API compatibility)
      * @returns {Array} List of available voices
      */
     getVoices() {
-        // TODO: Return espeak-ng WASM voices
-        // For now, return Web Speech API voices as fallback
-        if ('speechSynthesis' in window) {
-            return window.speechSynthesis.getVoices();
-        }
-        return [];
+        return [
+            { name: 'Thorsten (German)', lang: 'de-DE' },
+            { name: 'Amy (English)', lang: 'en-US' }
+        ];
     }
 
     /**
@@ -158,24 +189,20 @@ class ESpeakTTS {
      */
     destroy() {
         this.stop();
+        this.audioCache.clear();
 
         if (this.audioContext) {
             this.audioContext.close();
             this.audioContext = null;
         }
 
-        if (this.wasmModule) {
-            // TODO: Clean up WASM module resources
-            this.wasmModule = null;
-        }
-
         this.initialized = false;
-        console.log('[eSpeak] TTS destroyed');
+        console.log('[PiperTTS] Destroyed');
     }
 }
 
-// Export singleton instance
-export const espeakTTS = new ESpeakTTS();
+// Export singleton instance (API compatible with old espeakTTS)
+export const espeakTTS = new PiperTTS();
 
 /**
  * Audio playback utilities

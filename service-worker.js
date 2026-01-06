@@ -23,6 +23,20 @@ const CORE_ASSETS = [
     // Note: Model file (ggml-small-q8_0.bin) is cached in IndexedDB by whisper-wrapper.js
 ];
 
+// TTS audio snippets - preloaded for instant offline playback (~2.3MB total)
+const AUDIO_SNIPPETS_DE = [
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    'AE', 'OE', 'UE', 'SZ'
+].map(letter => `./audio/de/${letter}.wav`);
+
+const AUDIO_SNIPPETS_EN = [
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+].map(letter => `./audio/en/${letter}.wav`);
+
+const ALL_ASSETS = [...CORE_ASSETS, ...AUDIO_SNIPPETS_DE, ...AUDIO_SNIPPETS_EN];
+
 /**
  * Install event - cache core assets
  */
@@ -32,8 +46,8 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                console.log('[ServiceWorker] Caching core assets');
-                return cache.addAll(CORE_ASSETS);
+                console.log('[ServiceWorker] Caching all assets (' + ALL_ASSETS.length + ' files)');
+                return cache.addAll(ALL_ASSETS);
             })
             .then(() => {
                 console.log('[ServiceWorker] Core assets cached');

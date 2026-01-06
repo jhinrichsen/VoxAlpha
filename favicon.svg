@@ -7,7 +7,7 @@
     </linearGradient>
   </defs>
 
-  <rect width="100%" height="100%" fill="#000"/>
+  <rect width="100%" height="100%" fill="transparent"/>
 
   <!-- Draw A (red) first so it's behind -->
   <g fill="none" stroke="#FF4A4A" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">

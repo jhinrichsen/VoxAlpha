@@ -1,7 +1,20 @@
+# Environment and IDE
+.env
+.idea/
+
+# Model cache (survives make clean)
+.cache/
+
 # Generated build output directory
 # Contains: dist/pwa/ (PWA build), dist/{GOOS}/{GOARCH}/ (Go binaries), models (*.bin)
 dist/
 .version
+
+# Dependencies (Piper TTS binary, models, libraries)
+deps/
+
+# Generated audio snippets
+audio/
 
 # Whisper-cpp directory
 whisper-cpp/
