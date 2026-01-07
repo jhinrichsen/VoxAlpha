@@ -170,26 +170,22 @@ dists: clean pwa ## Build for all platforms
 	GOOS=windows GOARCH=arm64 $(MAKE) dist
 	echo "✓ Built binaries for all platforms in dist/"
 
-# Deployment (requires rclone)
-SFTP_USER ?= kambriw
-SFTP_SERVER ?= www239.your-server.de
-SFTP_TARGET ?= public_html/VoxAlpha
-RCLONE_DEST = :sftp:$(SFTP_TARGET)/ --sftp-host=$(SFTP_SERVER) --sftp-user=$(SFTP_USER)
+# Deployment (requires lftp)
+# Note: kambriw_6 user lands directly in VoxAlpha directory
+DEPLOY_USER ?= kambriw_6
+DEPLOY_SERVER ?= www239.your-server.de
+DEPLOY_PASS_FILE ?= ~/.ssh/voxalpha.pass
 
 .PHONY: deploy
-deploy: pwa ## Deploy PWA to server
-	echo "Deploying PWA (version $(VERSION))..."
-	rclone sync dist/pwa/ $(RCLONE_DEST) --exclude '*.bin'
-	echo "✓ Deployed to $(SFTP_SERVER):$(SFTP_TARGET)"
+deploy: pwa ## Deploy PWA to server (syncs with delete)
+	@echo "Deploying PWA (version $(VERSION))..."
+	@lftp -e "set ftp:ssl-force true; set ssl:verify-certificate no; open -u $(DEPLOY_USER),$$(cat $(DEPLOY_PASS_FILE)) ftp://$(DEPLOY_SERVER); mirror --reverse --delete --only-newer dist/pwa/ . ; quit"
+	@echo "✓ Deployed to $(DEPLOY_SERVER)"
 
 .PHONY: deploy-dry
-deploy-dry: pwa ## Dry-run deployment
-	echo "Version would be: $(VERSION)"
-	rclone sync dist/pwa/ $(RCLONE_DEST) --exclude '*.bin' --dry-run
-
-.PHONY: deploy-model
-deploy-model: ## Deploy Whisper model file
-	rclone copy $(MODEL_FILE) $(RCLONE_DEST)
+deploy-dry: pwa ## Dry-run deployment (shows what would change)
+	@echo "Would deploy version $(VERSION):"
+	@lftp -e "set ftp:ssl-force true; set ssl:verify-certificate no; open -u $(DEPLOY_USER),$$(cat $(DEPLOY_PASS_FILE)) ftp://$(DEPLOY_SERVER); mirror --reverse --delete --dry-run --only-newer dist/pwa/ . ; quit" 2>&1 | sed 's/$(DEPLOY_USER):[^@]*@/$(DEPLOY_USER):***@/g'
 
 # TTS Audio Snippets (Piper)
 PIPER_VERSION ?= 2023.11.14-2

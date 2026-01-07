@@ -63,7 +63,7 @@ class PiperTTS {
         const enWordToLetter = {
             'alpha': 'A', 'bravo': 'B', 'charlie': 'C', 'delta': 'D',
             'echo': 'E', 'foxtrot': 'F', 'golf': 'G', 'hotel': 'H',
-            'india': 'I', 'juliet': 'J', 'kilo': 'K', 'lima': 'L',
+            'india': 'I', 'juliett': 'J', 'kilo': 'K', 'lima': 'L',
             'mike': 'M', 'november': 'N', 'oscar': 'O', 'papa': 'P',
             'quebec': 'Q', 'romeo': 'R', 'sierra': 'S', 'tango': 'T',
             'uniform': 'U', 'victor': 'V', 'whiskey': 'W', 'x-ray': 'X',

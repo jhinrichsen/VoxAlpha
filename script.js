@@ -234,6 +234,9 @@ class VoxAlpha {
             // Ignore if typing in an input field
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
+            // Don't intercept keyboard shortcuts (Ctrl+, Alt+, Meta+)
+            if (e.ctrlKey || e.altKey || e.metaKey) return;
+
             const key = e.key.toUpperCase();
             const alphabet = this.alphabets[this.currentLanguage].alphabet;
 
@@ -263,6 +266,9 @@ class VoxAlpha {
         // Update UI
         this.updateLanguageUI();
         this.renderAlphabetGrid();
+
+        // Clear spelled output when switching language
+        this.elements.spelledOutput.textContent = '';
 
         // Update STT and TTS
         await whisperSTT.setLanguage(lang);
@@ -363,11 +369,13 @@ class VoxAlpha {
         try {
             await espeakTTS.speak(word);
 
-            // Append to spelled output
+            // Append to spelled output (limit to last 5 entries)
             const current = this.elements.spelledOutput.textContent;
-            this.elements.spelledOutput.textContent = current
-                ? `${current} - ${word}`
-                : word;
+            const entries = current ? current.split(' - ') : [];
+            entries.push(word);
+            // Keep only last 5 entries
+            const recentEntries = entries.slice(-5);
+            this.elements.spelledOutput.textContent = recentEntries.join(' - ');
         } catch (error) {
             console.error('[VoxAlpha] Failed to speak letter:', error);
         }
