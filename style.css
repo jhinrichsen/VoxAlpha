@@ -152,7 +152,7 @@ main {
 
 .alphabet-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    grid-template-columns: repeat(6, 1fr);
     gap: 0.5rem;
     margin-bottom: 1.5rem;
 }
@@ -488,9 +488,6 @@ footer {
         font-size: 2rem;
     }
 
-    .alphabet-grid {
-        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-    }
 }
 
 /* Update notification banner */

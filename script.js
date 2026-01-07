@@ -267,9 +267,6 @@ class VoxAlpha {
         this.updateLanguageUI();
         this.renderAlphabetGrid();
 
-        // Clear spelled output when switching language
-        this.elements.spelledOutput.textContent = '';
-
         // Update STT and TTS
         await whisperSTT.setLanguage(lang);
         await espeakTTS.setLanguage(lang);
@@ -368,14 +365,7 @@ class VoxAlpha {
     async speakLetter(letter, word) {
         try {
             await espeakTTS.speak(word);
-
-            // Append to spelled output (limit to last 5 entries)
-            const current = this.elements.spelledOutput.textContent;
-            const entries = current ? current.split(' - ') : [];
-            entries.push(word);
-            // Keep only last 5 entries
-            const recentEntries = entries.slice(-5);
-            this.elements.spelledOutput.textContent = recentEntries.join(' - ');
+            this.elements.spelledOutput.textContent = word;
         } catch (error) {
             console.error('[VoxAlpha] Failed to speak letter:', error);
         }
