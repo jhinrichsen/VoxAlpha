@@ -364,8 +364,8 @@ class VoxAlpha {
      */
     async speakLetter(letter, word) {
         try {
-            await espeakTTS.speak(word);
             this.elements.spelledOutput.textContent = word;
+            await espeakTTS.speak(word);
         } catch (error) {
             console.error('[VoxAlpha] Failed to speak letter:', error);
         }
