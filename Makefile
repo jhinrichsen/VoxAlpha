@@ -38,7 +38,8 @@ PWA_TARGETS = \
 	$(addprefix dist/pwa/,$(PWA_SCREENSHOTS)) \
 	$(addprefix dist/pwa/,$(PWA_AUDIO_DE)) \
 	$(addprefix dist/pwa/,$(PWA_AUDIO_EN)) \
-	dist/pwa/service-worker.js
+	dist/pwa/service-worker.js \
+	dist/pwa/ggml-small-q8_0.bin
 
 .PHONY: all
 all: pwa build test ## Build PWA, binary, and run tests
@@ -140,6 +141,12 @@ $(MODEL_FILE): $(MODEL_CACHE)
 	@mkdir -p dist
 	@cp $< $@
 	@echo "✓ Model ready in dist/"
+
+# Copy from cache to dist/pwa
+dist/pwa/ggml-small-q8_0.bin: $(MODEL_CACHE)
+	@mkdir -p dist/pwa
+	@cp $< $@
+	@echo "✓ Model ready in dist/pwa/"
 
 .PHONY: download-model
 download-model: $(MODEL_FILE) ## Download Whisper model (cached)
