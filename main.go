@@ -20,9 +20,6 @@ var version = "dev"
 //go:embed dist/pwa
 var content embed.FS
 
-//go:embed dist/ggml-small-q8_0.bin
-var modelData []byte
-
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "VoxAlpha %s - Offline Speech Spelling Trainer\n\nUsage:\n", version)
@@ -58,7 +55,12 @@ func main() {
 			// Serve external model if specified
 			http.ServeFile(w, r, *model)
 		} else {
-			// Serve embedded model
+			// Serve embedded model from dist/pwa
+			modelData, err := content.ReadFile("dist/pwa/ggml-small-q8_0.bin")
+			if err != nil {
+				http.Error(w, "Model not found", http.StatusNotFound)
+				return
+			}
 			w.Header().Set("Content-Length", fmt.Sprintf("%d", len(modelData)))
 			w.Write(modelData)
 		}

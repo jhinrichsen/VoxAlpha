@@ -110,8 +110,8 @@ dist/pwa/voxalpha.html: voxalpha.html .version
 .PHONY: build
 build: $(BINARY) ## Build Go binary
 
-# Binary depends on PWA files and model (Go embed doesn't track file changes)
-$(BINARY): $(PWA_TARGETS) $(MODEL_FILE)
+# Binary depends on PWA files (Go embed doesn't track file changes)
+$(BINARY): $(PWA_TARGETS)
 	mkdir -p $(dir $(BINARY))
 	$(GO) build -ldflags "-X 'main.version=$(VERSION)'" -o $(BINARY) .
 
@@ -127,7 +127,6 @@ test: pwa ## Run tests (requires PWA build first)
 MODEL_NAME = ggml-small-q8_0.bin
 MODEL_URL = https://huggingface.co/ggerganov/whisper.cpp/resolve/main/$(MODEL_NAME)
 MODEL_CACHE = .cache/$(MODEL_NAME)
-MODEL_FILE = dist/$(MODEL_NAME)
 
 # Download to cache (only if not already cached)
 $(MODEL_CACHE):
@@ -136,12 +135,6 @@ $(MODEL_CACHE):
 	@curl -L -o $@ $(MODEL_URL)
 	@echo "✓ Model cached in .cache/"
 
-# Copy from cache to dist
-$(MODEL_FILE): $(MODEL_CACHE)
-	@mkdir -p dist
-	@cp $< $@
-	@echo "✓ Model ready in dist/"
-
 # Copy from cache to dist/pwa
 dist/pwa/ggml-small-q8_0.bin: $(MODEL_CACHE)
 	@mkdir -p dist/pwa
@@ -149,11 +142,11 @@ dist/pwa/ggml-small-q8_0.bin: $(MODEL_CACHE)
 	@echo "✓ Model ready in dist/pwa/"
 
 .PHONY: download-model
-download-model: $(MODEL_FILE) ## Download Whisper model (cached)
+download-model: dist/pwa/ggml-small-q8_0.bin ## Download Whisper model (cached)
 
 .PHONY: clean-model
-clean-model: ## Remove model from dist (cache preserved)
-	rm -f $(MODEL_FILE)
+clean-model: ## Remove model from dist/pwa (cache preserved)
+	rm -f dist/pwa/$(MODEL_NAME)
 
 .PHONY: purge-model
 purge-model: clean-model ## Remove model completely (including cache)
