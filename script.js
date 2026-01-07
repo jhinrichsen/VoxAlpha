@@ -634,8 +634,11 @@ class VoxAlpha {
         top3.sort((a, b) => b.similarity - a.similarity);
         console.log(`[VoxAlpha] Top 3: ${top3.slice(0, 3).map(x => `${x.city} (${(x.similarity * 100).toFixed(1)}%)`).join(', ')}`);
 
-        // Accept if best match is the expected city
-        const isCorrect = this.normalizeText(bestMatch) === expected;
+        // Check if bestMatch is the expected word OR any alias for this letter
+        const aliases = this.alphabets[this.currentLanguage].aliases?.[this.currentChallenge.letter] || [];
+        const normalizedAliases = aliases.map(a => this.normalizeText(a));
+        const normalizedBestMatch = this.normalizeText(bestMatch);
+        const isCorrect = normalizedBestMatch === expected || normalizedAliases.includes(normalizedBestMatch);
 
         if (isCorrect) {
             this.elements.transcription.textContent = `✓ Correct! "${bestMatch}"`;

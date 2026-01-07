@@ -32,6 +32,10 @@
       "Y": "Ypsilon",
       "Z": "Zwickau",
       "ß": "Eszett"
+    },
+    "aliases": {
+      "Y": ["Y", "Ypsilon"],
+      "ß": ["Eszett", "Esszet"]
     }
   },
   "en": {
